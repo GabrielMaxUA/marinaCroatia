@@ -262,4 +262,4 @@ SUPER ADMIN - LIGIN REQUIERED, CREATING/READING/UPDATING/DELETING CONTENT:
  4. clicking on owners link -> owners card to be displayed with theit info including password (not visible by default) and visible by request where admin can update it to new one and send it to owner. also bank requesition must be there so as the view properties would lead to their houses grid
   owner card would be able to be edited by admin - update/delete image/photo of the owner
 when owner is about to be deleted - alert window to be shown 
- 5. 
+ 5. logout must lead to welcome blade not to login
