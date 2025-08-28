@@ -94,6 +94,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/owners', [AdminController::class, 'owners'])->name('owners');
     Route::post('/owners', [AdminController::class, 'createOwner'])->name('owners.create');
     Route::put('/owners/{owner}', [AdminController::class, 'updateOwner'])->name('owners.update');
+    Route::delete('/owners/{owner}', [AdminController::class, 'deleteOwner'])->name('owners.delete');
     Route::post('/owners/{owner}/reset-password', [AdminController::class, 'resetOwnerPassword'])->name('owners.reset-password');
     
     Route::post('/locations', [AdminController::class, 'createLocation'])->name('locations.create');
@@ -115,6 +116,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     
     Route::get('/bookings', [AdminController::class, 'bookings'])->name('bookings');
     Route::post('/bookings', [AdminController::class, 'createBooking'])->name('bookings.create');
+    Route::get('/calendar', [AdminController::class, 'calendar'])->name('calendar');
+    Route::get('/calendar/day/{date}', [AdminController::class, 'calendarDay'])->name('calendar.day');
     Route::put('/bookings/{booking}', [AdminController::class, 'updateBooking'])->name('bookings.update');
     Route::delete('/bookings/{booking}', [AdminController::class, 'cancelBooking'])->name('bookings.cancel');
 });

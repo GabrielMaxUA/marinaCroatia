@@ -82,6 +82,9 @@
                                 title="{{ $owner->is_active ? 'Deactivate' : 'Activate' }}">
                             {{ $owner->is_active ? '⏸️' : '▶️' }}
                         </button>
+                        <button class="action-btn delete" onclick="deleteOwner({{ $owner->id }})" title="Delete Owner">
+                            🗑️
+                        </button>
                     </div>
                 </div>
                 
@@ -97,6 +100,14 @@
                         <span class="value">{{ $owner->phone }}</span>
                     </div>
                     @endif
+                    
+                    <div class="detail-item">
+                        <span class="label">Password:</span>
+                        <span class="value">
+                            <span id="password-{{ $owner->id }}" style="display: none;">{{ $owner->temp_password ?: 'Not set' }}</span>
+                            <button class="btn btn-sm btn-info" onclick="togglePassword({{ $owner->id }})" id="toggle-{{ $owner->id }}">Show</button>
+                        </span>
+                    </div>
                     
                     <div class="detail-item">
                         <span class="label">Properties:</span>
@@ -338,6 +349,27 @@
         border-color: #10b981;
     }
     
+    .action-btn.delete:hover {
+        background: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+    
+    .btn.btn-sm.btn-info {
+        padding: 0.125rem 0.375rem;
+        font-size: 0.75rem;
+        background: #3b82f6;
+        color: white;
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .btn.btn-sm.btn-info:hover {
+        background: #2563eb;
+        border-color: #2563eb;
+    }
+    
     .owner-details {
         padding: 1rem 1.5rem;
     }
@@ -534,7 +566,7 @@ function saveOwner(event) {
 }
 
 function resetOwnerPassword(id) {
-    if (confirm('Are you sure you want to reset this owner\'s password?')) {
+    if (confirm('Are you sure you want to reset this owner\'s password?\nA new temporary password will be generated.')) {
         fetch(`{{ url('admin/owners') }}/${id}/reset-password`, {
             method: 'POST',
             headers: {
@@ -558,14 +590,60 @@ function resetOwnerPassword(id) {
 
 function toggleOwnerStatus(id, activate) {
     const action = activate === 'true' ? 'activate' : 'deactivate';
-    if (confirm(`Are you sure you want to ${action} this owner?`)) {
+    const actionPast = activate === 'true' ? 'activated' : 'deactivated';
+    const status = activate === 'true' ? 'ACTIVE' : 'INACTIVE';
+    
+    if (confirm(`Are you sure you want to ${action} this owner?\nThe owner status will be set to: ${status}`)) {
         const formData = new FormData();
-        formData.append('is_active', activate);
+        // Convert string to boolean value
+        formData.append('is_active', activate === 'true' ? '1' : '0');
         formData.append('_method', 'PUT');
         
         fetch(`{{ url('admin/owners') }}/${id}`, {
             method: 'POST',
             body: formData,
+            headers: {
+                'X-CSRF-TOKEN': window.Laravel.csrfToken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showAlert(`Owner has been ${actionPast} successfully!`, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                console.error('Toggle status error:', data);
+                showAlert(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while updating owner status', 'error');
+        });
+    }
+}
+
+function viewOwnerProperties(ownerId, ownerName) {
+    // Navigate to houses page filtered by this owner
+    window.location.href = `{{ route('admin.houses') }}?owner_id=${ownerId}`;
+}
+
+function viewOwnerBookings(ownerId, ownerName) {
+    // Navigate to bookings page filtered by this owner
+    window.location.href = `{{ route('admin.bookings') }}?owner_id=${ownerId}`;
+}
+
+function deleteOwner(id) {
+    if (confirm('Are you sure you want to delete this owner?\n\n⚠️ WARNING: This action cannot be undone!\nThe owner and all associated data will be permanently removed.')) {
+        fetch(`{{ url('admin/owners') }}/${id}`, {
+            method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': window.Laravel.csrfToken
             }
@@ -583,19 +661,22 @@ function toggleOwnerStatus(id, activate) {
         })
         .catch(error => {
             console.error('Error:', error);
-            showAlert('An error occurred', 'error');
+            showAlert('An error occurred while deleting owner', 'error');
         });
     }
 }
 
-function viewOwnerProperties(ownerId, ownerName) {
-    // Navigate to houses page filtered by this owner
-    window.location.href = `{{ route('admin.houses') }}?owner_id=${ownerId}`;
-}
-
-function viewOwnerBookings(ownerId, ownerName) {
-    // Navigate to bookings page filtered by this owner
-    window.location.href = `{{ route('admin.bookings') }}?owner_id=${ownerId}`;
+function togglePassword(ownerId) {
+    const passwordSpan = document.getElementById('password-' + ownerId);
+    const toggleBtn = document.getElementById('toggle-' + ownerId);
+    
+    if (passwordSpan.style.display === 'none') {
+        passwordSpan.style.display = 'inline';
+        toggleBtn.textContent = 'Hide';
+    } else {
+        passwordSpan.style.display = 'none';
+        toggleBtn.textContent = 'Show';
+    }
 }
 
 // Reset form when opening modal

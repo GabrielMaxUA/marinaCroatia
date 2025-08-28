@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 26, 2025 at 06:56 PM
+-- Generation Time: Aug 28, 2025 at 05:41 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -74,7 +74,7 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `suite_id`, `created_by`, `booking_source`, `guest_name`, `guest_phone`, `guest_quantity`, `check_in`, `check_out`, `total_nights`, `parking_needed`, `pets_allowed`, `has_small_kids`, `deposit_paid`, `deposit_amount`, `notes`, `created_at`, `updated_at`, `is_owner_booking`, `cancelled_at`, `cancelled_by`) VALUES
-(1, 1, 1, 'admin', 'John Doe', '+123456789', 2, '2025-09-01', '2025-09-04', 3, 0, 0, 0, 0, NULL, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 0, NULL, NULL);
+(1, 1, 1, 'admin', 'John Doe', '+123456789', 2, '2025-09-01', '2025-09-04', 3, 0, 0, 0, 0, NULL, NULL, '2025-08-26 22:53:28', '2025-08-28 03:47:03', 0, '2025-08-28 03:47:03', 1);
 
 --
 -- Triggers `bookings`
@@ -200,7 +200,7 @@ CREATE TABLE `houses` (
 --
 
 INSERT INTO `houses` (`id`, `location_id`, `owner_id`, `name`, `street_address`, `house_number`, `distance_to_sea`, `parking_available`, `parking_description`, `description`, `owner_phone`, `owner_email`, `bank_account_number`, `bank_name`, `created_at`, `updated_at`, `is_active`) VALUES
-(1, 1, 2, 'Villa Adriatic', 'Ulica Obale', '12', NULL, 0, NULL, 'Sea-view villa', NULL, NULL, NULL, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 1);
+(1, 1, 4, 'villa costa', 'Ulica Obale', '12', '50 m to the sea', 0, NULL, 'Sea-view villa', '4168560684', 'maxim.don.mg@gmail.com', 'kjhgkja111', 'bmo', '2025-08-26 22:53:28', '2025-08-28 03:46:10', 1);
 
 -- --------------------------------------------------------
 
@@ -278,6 +278,29 @@ CREATE TABLE `owner_dashboard` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `id` varchar(255) NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `payload` longtext NOT NULL,
+  `last_activity` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sessions`
+--
+
+INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
+('ltqR0EKk3M5O0TON5ApPE5QyuEdQFXeqCN7TbGqa', 1, '127.0.0.1', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoidG1kOW1lSmRKQmhnNUk4Z1pjY1hDM3RURDIyZ0ZuUDZPY0JyNkdrbCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9ib29raW5ncz9ob3VzZV9pZD0xIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1756417050),
+('npnhM8D21HSKlZvDxENVMMdL31L0zs0O02pSqgLS', NULL, '127.0.0.1', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiWVJoZ0pBQ3ZGU0Z5aXlrQVFNZXVMQlRMZE83OUJrRnNTTUQ1Nk5xeCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MjE6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMCI7fX0=', 1756340390);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `site_content`
 --
 
@@ -295,7 +318,7 @@ CREATE TABLE `site_content` (
 
 INSERT INTO `site_content` (`id`, `content_key`, `content_value`, `updated_at`, `updated_by`) VALUES
 (1, 'main_heading', 'Luxury Croatian Accommodations', '2025-08-26 22:53:28', 1),
-(2, 'main_description', 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.', '2025-08-26 22:53:28', 1);
+(2, 'main_description', 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.', '2025-08-27 04:23:18', 1);
 
 -- --------------------------------------------------------
 
@@ -322,7 +345,7 @@ CREATE TABLE `suites` (
 --
 
 INSERT INTO `suites` (`id`, `house_id`, `name`, `capacity_people`, `bedrooms`, `bathrooms`, `floor_number`, `description`, `created_at`, `updated_at`, `is_active`) VALUES
-(1, 1, 'Suite A', 4, 2, 1, 1, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 1),
+(1, 1, 'Suite A', 4, 2, 1, 1, 'shit hole', '2025-08-26 22:53:28', '2025-08-27 04:15:08', 1),
 (2, 1, 'Suite B', 2, 1, 1, 2, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 1);
 
 -- --------------------------------------------------------
@@ -364,6 +387,7 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
+  `temp_password` varchar(255) DEFAULT NULL,
   `role` enum('admin','owner') NOT NULL,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
@@ -380,9 +404,11 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `first_name`, `last_name`, `phone`, `notification_email`, `notification_sms`, `preferred_contact_time`, `created_at`, `updated_at`, `is_active`) VALUES
-(1, 'admin@marinacroatia.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'System', 'Administrator', '+385123456789', 1, 0, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 1),
-(2, 'owner@marinacroatia.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'owner', 'Ana', 'Owner', '+385987654321', 1, 0, NULL, '2025-08-26 22:53:28', '2025-08-26 22:53:28', 1);
+INSERT INTO `users` (`id`, `email`, `password_hash`, `temp_password`, `role`, `first_name`, `last_name`, `phone`, `notification_email`, `notification_sms`, `preferred_contact_time`, `created_at`, `updated_at`, `is_active`) VALUES
+(1, 'admin@marinacroatia.com', '$2y$12$3822M.H6.7m4Xk85PUTTferrUshs0vHx719Hy99xa46H6Lbjnwok2', NULL, 'admin', 'System', 'Administrator', '+385123456789', 1, 0, NULL, '2025-08-26 22:53:28', '2025-08-26 23:45:41', 1),
+(2, 'owner@marinacroatia.com', '$2y$12$zExtO42JrTHk4F7nhYYHS.jNG2MuwM2F33r6FnJ/nwwFcDqb/3Ydq', 'temp2761', 'owner', 'Ana', 'Owner', '+385987654321', 1, 1, NULL, '2025-08-26 22:53:28', '2025-08-27 04:21:41', 1),
+(4, 'maxim.don.mg@gmail.com', '$2y$12$rTokM0EHjP6EssI8G2CJSeep2.yYh6OjHS.SLU9QXGzZ5cLOxth0S', 'temp1082', 'owner', 'Max', 'Gabriel', '4168560684', 1, 0, NULL, '2025-08-27 03:50:34', '2025-08-27 04:07:33', 1),
+(5, 'maxim.don.mg@gmail.com1', '$2y$12$Zz4gaQ0PNq00t4VQMz.rzO2a6WORVR/ZRkrT7GlfIiv8cPiCr.7r6', 'temp3940', 'owner', 'Max', 'Gabriel', '4168560684', 1, 0, NULL, '2025-08-27 04:22:32', '2025-08-28 04:12:21', 1);
 
 -- --------------------------------------------------------
 
@@ -486,6 +512,14 @@ ALTER TABLE `messages`
   ADD KEY `idx_created` (`created_at`);
 
 --
+-- Indexes for table `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sessions_user_id_index` (`user_id`),
+  ADD KEY `sessions_last_activity_index` (`last_activity`);
+
+--
 -- Indexes for table `site_content`
 --
 ALTER TABLE `site_content`
@@ -562,7 +596,7 @@ ALTER TABLE `booking_dates`
 -- AUTO_INCREMENT for table `houses`
 --
 ALTER TABLE `houses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `house_images`
@@ -592,7 +626,7 @@ ALTER TABLE `site_content`
 -- AUTO_INCREMENT for table `suites`
 --
 ALTER TABLE `suites`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `suite_amenities`
@@ -610,7 +644,7 @@ ALTER TABLE `suite_images`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables
@@ -696,26 +730,6 @@ ALTER TABLE `suite_amenities`
 --
 ALTER TABLE `suite_images`
   ADD CONSTRAINT `suite_images_ibfk_1` FOREIGN KEY (`suite_id`) REFERENCES `suites` (`id`) ON DELETE CASCADE;
--- --------------------------------------------------------
-
---
--- Table structure for table `sessions`
---
-
-CREATE TABLE `sessions` (
-  `id` varchar(255) NOT NULL PRIMARY KEY,
-  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` text DEFAULT NULL,
-  `payload` longtext NOT NULL,
-  `last_activity` int(11) NOT NULL,
-  KEY `sessions_user_id_index` (`user_id`),
-  KEY `sessions_last_activity_index` (`last_activity`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Add temp_password column for admin viewing
-ALTER TABLE users ADD COLUMN temp_password VARCHAR(255) NULL AFTER password_hash;
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

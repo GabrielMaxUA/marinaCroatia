@@ -52,6 +52,7 @@
                                 title="{{ $owner->is_active ? 'Deactivate' : 'Activate' }}">
                             {{ $owner->is_active ? '⏸️' : '▶️' }}
                         </button>
+                        <button class="btn btn-danger" onclick="deleteOwner({{ $owner->id }})" title="Delete Owner">🗑️</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -59,6 +60,10 @@
                     @if($owner->phone)
                         <p><strong>Phone:</strong> {{ $owner->phone }}</p>
                     @endif
+                    <p><strong>Password:</strong> 
+                        <span id="password-{{ $owner->id }}" style="display: none;">{{ $owner->temp_password ?: 'Not set' }}</span>
+                        <button class="btn btn-sm btn-info" onclick="togglePassword({{ $owner->id }})" id="toggle-{{ $owner->id }}">Show</button>
+                    </p>
                     <p><strong>Houses:</strong> {{ $owner->houses->count() }}</p>
                     <p><strong>Status:</strong> 
                         <span class="status-badge {{ $owner->is_active ? 'active' : 'inactive' }}">
@@ -314,6 +319,45 @@
                 <label for="suite-description">Description:</label>
                 <textarea id="suite-description" name="description" rows="3"></textarea>
             </div>
+            
+            <div class="form-group">
+                <label>Amenities:</label>
+                <div class="amenities-checkboxes" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Pet Friendly">
+                        Pet Friendly
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Dishwasher">
+                        Dishwasher
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Washing Machine">
+                        Washing Machine
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Balcony">
+                        Balcony
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Sea View">
+                        Sea View
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Air Conditioning">
+                        Air Conditioning
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="WiFi">
+                        WiFi
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="amenities[]" value="Parking">
+                        Parking
+                    </label>
+                </div>
+            </div>
+            
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('suite-modal')">Cancel</button>
                 <button type="submit" class="btn btn-primary">Save Suite</button>
@@ -414,7 +458,7 @@ function saveOwner(event) {
 }
 
 function resetOwnerPassword(id) {
-    if (confirm('Are you sure you want to reset this owner\'s password?')) {
+    if (confirm('Are you sure you want to reset this owner\'s password?\nA new temporary password will be generated.')) {
         fetch(`{{ url('admin/owners') }}/${id}/reset-password`, {
             method: 'POST',
             headers: {
@@ -438,9 +482,13 @@ function resetOwnerPassword(id) {
 
 function toggleOwnerStatus(id, activate) {
     const action = activate === 'true' ? 'activate' : 'deactivate';
-    if (confirm(`Are you sure you want to ${action} this owner?`)) {
+    const actionPast = activate === 'true' ? 'activated' : 'deactivated';
+    const status = activate === 'true' ? 'ACTIVE' : 'INACTIVE';
+    
+    if (confirm(`Are you sure you want to ${action} this owner?\nThe owner status will be set to: ${status}`)) {
         const formData = new FormData();
-        formData.append('is_active', activate);
+        // Convert string to boolean value
+        formData.append('is_active', activate === 'true' ? '1' : '0');
         formData.append('_method', 'PUT');
         
         fetch(`{{ url('admin/owners') }}/${id}`, {
@@ -450,20 +498,26 @@ function toggleOwnerStatus(id, activate) {
                 'X-CSRF-TOKEN': window.Laravel.csrfToken
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                showAlert(data.message, 'success');
+                showAlert(`Owner has been ${actionPast} successfully!`, 'success');
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
             } else {
+                console.error('Toggle status error:', data);
                 showAlert(data.message || 'An error occurred', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showAlert('An error occurred', 'error');
+            showAlert('An error occurred while updating owner status', 'error');
         });
     }
 }
@@ -862,6 +916,45 @@ document.getElementById('house-modal').addEventListener('click', function(e) {
         document.getElementById('house-form').reset();
     }
 });
+
+function deleteOwner(id) {
+    if (confirm('Are you sure you want to delete this owner?\n\n⚠️ WARNING: This action cannot be undone!\nThe owner and all associated data will be permanently removed.')) {
+        fetch(`{{ url('admin/owners') }}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': window.Laravel.csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showAlert(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred while deleting owner', 'error');
+        });
+    }
+}
+
+function togglePassword(ownerId) {
+    const passwordSpan = document.getElementById('password-' + ownerId);
+    const toggleBtn = document.getElementById('toggle-' + ownerId);
+    
+    if (passwordSpan.style.display === 'none') {
+        passwordSpan.style.display = 'inline';
+        toggleBtn.textContent = 'Hide';
+    } else {
+        passwordSpan.style.display = 'none';
+        toggleBtn.textContent = 'Show';
+    }
+}
 
 // Reset form when opening owner modal
 document.getElementById('owner-modal').addEventListener('click', function(e) {

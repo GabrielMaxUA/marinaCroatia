@@ -249,17 +249,20 @@ clicking on booked date modal/new blade to be opened with all bookings for this 
 
 
 SUPER ADMIN - LIGIN REQUIERED, CREATING/READING/UPDATING/DELETING CONTENT:
- 1. MAIN PAGE - SEEING WELCOME TITLE AND LIST OF LOCATIONS (loations are presented as an image cart with the name of the location 300x300 size card)
+ 1. MAIN PAGE - SEEING WELCOME TITLE AND LIST OF LOCATIONS (loations are presented as an image cart with the name of the location 300width with auto height size card)
  EDIT BUTTON FOR EACH COMPONENT LIKE TITLE/LOCATION to be able to add ne location delete or update existing location, change photo for location card so as the title text - save button to update and reload the page after corrections
+when location is about to be deleted/saved after editing - alert window to be shown 
 
  2. clicking on location card -> new blade opens with grid of houses in this specific location (same presentation -> card 250 by 250 where images of this house in top of the card and description of the house like distance to the sea, pets allowance, parking etc so as the bank info) check the parking toggle functionality as it throws error when added
- edit button for houses (to be able to change image/video of the house, description and other house card data) also add house button which would open a module where info of the house will be added o populate the card(distance to the sea, owner list to chose owner house from and other necessary data. owner isnt visible to any other user but super admin) . 
- when location is about to be deleted - alert window to be shown 
+ edit button for houses (to be able to change image/video of the house, description and other house card data) also add house button which would open a module where info of the house will be added o populate the card(distance to the sea, owner list to chose owner house from and other necessary data like parking as now when parking tapped to save and describe it throws error(check the data flow and matching our marina_croatia.sql structure). owner isnt visible to any other user but super admin) . 
+ when house is about to be deleted/saved after editing  - alert window to be shown 
 
  3. clicking on the house card inside the house grid blade user directed to the new blade with new grid of all units in this house (same style as a house grid where images/video of the unit is top and below the image is a discription of the unit like number of guest this unit can take number of bedrooms and bathrooms and what amenities this unit has)
  same flow as for the house card so admin could add/delete/update the unit info PLUS ONLY ADMIN WOULD HAVE A BUTTON bookings which would open the modal/calendar to see the available dates for this specific unit where bookings done by owner of the house this unit belongs to cant be corrected by anyone but by the owner of the house and way versa - admins bookings cant be corrected by owners of the house owners and admins bookings colors in calendar should be different for user friendly management i guess
-  when house or suite is about to be deleted - alert window to be shown 
+  when suite is about to be deleted/saved after editing  - alert window to be shown 
  4. clicking on owners link -> owners card to be displayed with theit info including password (not visible by default) and visible by request where admin can update it to new one and send it to owner. also bank requesition must be there so as the view properties would lead to their houses grid
   owner card would be able to be edited by admin - update/delete image/photo of the owner
-when owner is about to be deleted - alert window to be shown 
+when owner is about to be deleted/saved after editing  - alert window to be shown 
  5. logout must lead to welcome blade not to login
+
+ 6. check setup_database file as i dont understand why do we need it for if we have our env file with all necessary credentials in it

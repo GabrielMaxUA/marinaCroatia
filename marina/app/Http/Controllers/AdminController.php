@@ -119,20 +119,28 @@ class AdminController extends Controller
     public function updateOwner(Request $request, User $owner)
     {
         $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email,' . $owner->id,
+            'first_name' => 'string|max:100',
+            'last_name' => 'string|max:100',
+            'email' => 'email|unique:users,email,' . $owner->id,
             'phone' => 'nullable|string|max:20',
-            'is_active' => 'boolean'
+            'is_active' => 'sometimes'
         ]);
 
-        $owner->update($request->only([
-            'first_name', 'last_name', 'email', 'phone', 'is_active'
-        ]));
+        // Handle the update data
+        $updateData = $request->only([
+            'first_name', 'last_name', 'email', 'phone'
+        ]);
+
+        // Handle is_active separately to ensure proper boolean conversion
+        if ($request->has('is_active')) {
+            $updateData['is_active'] = $request->boolean('is_active');
+        }
+
+        $owner->update($updateData);
 
         return response()->json([
             'success' => true,
-            'owner' => $owner,
+            'owner' => $owner->fresh(),
             'message' => 'Owner updated successfully'
         ]);
     }
@@ -150,6 +158,28 @@ class AdminController extends Controller
             'success' => true,
             'temporary_password' => $tempPassword,
             'message' => 'Password reset successfully'
+        ]);
+    }
+
+    public function deleteOwner(User $owner)
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Access denied. Admin privileges required.');
+        }
+
+        // Check if owner has houses
+        if ($owner->houses()->count() > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete owner. Please reassign or delete their houses first.'
+            ]);
+        }
+
+        $owner->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Owner deleted successfully'
         ]);
     }
 
@@ -296,13 +326,22 @@ class AdminController extends Controller
             'bathrooms' => 'required|integer|min:0|max:10',
             'floor_number' => 'nullable|integer',
             'description' => 'nullable|string',
+            'amenities' => 'array',
+            'amenities.*' => 'string|max:100'
         ]);
 
-        $suite = Suite::create($request->all());
+        $suite = Suite::create($request->except(['amenities']));
+
+        // Add amenities if provided
+        if ($request->has('amenities')) {
+            foreach ($request->amenities as $amenity) {
+                $suite->amenities()->create(['amenity_name' => $amenity]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'suite' => $suite->load('house'),
+            'suite' => $suite->load(['house', 'amenities']),
             'message' => 'Suite created successfully'
         ]);
     }
@@ -317,14 +356,26 @@ class AdminController extends Controller
             'bathrooms' => 'required|integer|min:0|max:10',
             'floor_number' => 'nullable|integer',
             'description' => 'nullable|string',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'amenities' => 'array',
+            'amenities.*' => 'string|max:100'
         ]);
 
-        $suite->update($request->all());
+        $suite->update($request->except(['amenities']));
+
+        // Update amenities if provided
+        if ($request->has('amenities')) {
+            // Delete existing amenities
+            $suite->amenities()->delete();
+            // Add new amenities
+            foreach ($request->amenities as $amenity) {
+                $suite->amenities()->create(['amenity_name' => $amenity]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'suite' => $suite->load('house'),
+            'suite' => $suite->load(['house', 'amenities']),
             'message' => 'Suite updated successfully'
         ]);
     }
@@ -580,6 +631,48 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'suite' => $suite
+        ]);
+    }
+
+    public function calendar(Request $request)
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Access denied. Admin privileges required.');
+        }
+
+        $locations = Location::with('houses.suites')->get();
+        
+        // Get bookings for the calendar view using the database view
+        $year = $request->get('year', date('Y'));
+        $month = $request->get('month', date('n'));
+        $locationId = $request->get('location_id');
+        
+        $query = DB::table('calendar_view')
+                   ->whereYear('booking_date', $year)
+                   ->whereMonth('booking_date', $month);
+        
+        if ($locationId) {
+            $query->where('location_name', Location::find($locationId)->name ?? '');
+        }
+        
+        $bookings = $query->get();
+        
+        return view('admin.calendar', compact('locations', 'bookings'));
+    }
+
+    public function calendarDay($date)
+    {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Access denied. Admin privileges required.');
+        }
+
+        $bookings = DB::table('calendar_view')
+                     ->where('booking_date', $date)
+                     ->get();
+
+        return response()->json([
+            'success' => true,
+            'bookings' => $bookings
         ]);
     }
 }
