@@ -24,7 +24,7 @@ Route::get('/locations/{location}', function($locationId) {
 })->name('public.houses');
 
 Route::get('/houses/{house}', function($houseId) {
-    $house = \App\Models\House::with(['location', 'suites.amenities', 'suites.images'])->findOrFail($houseId);
+    $house = \App\Models\House::with(['location', 'owner', 'suites.amenities', 'suites.images'])->findOrFail($houseId);
     $suites = $house->suites;
     
     return view('public.suites', compact('house', 'suites'));
@@ -89,15 +89,18 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', function() { return redirect()->route('home'); })->name('dashboard');
+    Route::get('/locations', [AdminController::class, 'locations'])->name('locations');
     Route::get('/houses', [AdminController::class, 'houses'])->name('houses');
     Route::get('/owners', [AdminController::class, 'owners'])->name('owners');
+    Route::get('/owners/{owner}/info', [AdminController::class, 'getOwnerInfo'])->name('owners.info');
     Route::post('/owners', [AdminController::class, 'createOwner'])->name('owners.create');
     Route::put('/owners/{owner}', [AdminController::class, 'updateOwner'])->name('owners.update');
     Route::delete('/owners/{owner}', [AdminController::class, 'deleteOwner'])->name('owners.delete');
     Route::post('/owners/{owner}/reset-password', [AdminController::class, 'resetOwnerPassword'])->name('owners.reset-password');
     
     Route::post('/locations', [AdminController::class, 'createLocation'])->name('locations.create');
+    Route::get('/locations/{location}', [AdminController::class, 'getLocation'])->name('locations.show');
     Route::put('/locations/{location}', [AdminController::class, 'updateLocation'])->name('locations.update');
     Route::delete('/locations/{location}', [AdminController::class, 'deleteLocation'])->name('locations.delete');
     
@@ -123,7 +126,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 Route::prefix('owner')->name('owner.')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [OwnerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', function() { return redirect()->route('home'); })->name('dashboard');
     Route::get('/houses/{house}', [OwnerController::class, 'house'])->name('house');
     Route::get('/suites/{suite}', [OwnerController::class, 'suite'])->name('suite');
     Route::get('/suites/{suite}/calendar', [OwnerController::class, 'calendar'])->name('suite.calendar');

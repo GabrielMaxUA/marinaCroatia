@@ -56,6 +56,11 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class, 'created_by');
     }
 
+    public function bankInfo()
+    {
+        return $this->hasOne(BankInfo::class, 'owner_id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

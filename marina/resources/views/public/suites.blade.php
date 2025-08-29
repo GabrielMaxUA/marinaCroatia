@@ -18,11 +18,6 @@
 
 <!-- House Header -->
 <section class="house-header">
-    @auth
-        @if(auth()->user()->isAdmin())
-            <button class="edit-btn" onclick="editHouseHeader()" title="Edit House">✏️</button>
-        @endif
-    @endauth
     <div class="container">
         <div class="house-header-content">
             <div class="house-header-info">
@@ -74,6 +69,7 @@
                         <div class="admin-controls">
                             <button class="edit-btn" onclick="event.stopPropagation(); editSuite({{ $suite->id }})" title="Edit Suite">✏️</button>
                             <button class="calendar-btn" onclick="event.stopPropagation(); viewSuiteCalendar({{ $suite->id }})" title="View Calendar">📅</button>
+                            <button class="bank-btn" onclick="event.stopPropagation(); viewOwnerInfo({{ $suite->house->owner->id }}, '{{ $suite->name }}')" title="Owner & Bank Info">🏦</button>
                             <button class="delete-btn" onclick="event.stopPropagation(); deleteSuite({{ $suite->id }})" title="Delete Suite">×</button>
                         </div>
                     @endif
@@ -401,34 +397,48 @@
         right: 12px;
         z-index: 10;
         display: flex;
-        gap: 4px;
+        gap: 6px;
+        flex-wrap: wrap;
     }
     
     .admin-controls .edit-btn,
     .admin-controls .calendar-btn,
+    .admin-controls .bank-btn,
     .admin-controls .delete-btn {
         background: rgba(255,255,255,0.95);
         border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        backdrop-filter: blur(10px);
     }
     
     .admin-controls .edit-btn:hover {
         background: #f59e0b;
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
     }
     
     .admin-controls .calendar-btn:hover {
         background: #3b82f6;
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    
+    .admin-controls .bank-btn:hover {
+        background: #10b981;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
     
     .admin-controls .delete-btn {
@@ -439,6 +449,8 @@
     .admin-controls .delete-btn:hover {
         background: #ef4444;
         color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
     }
     
     .suite-image {
@@ -738,9 +750,6 @@ let editingSuite = null;
         window.location.href = `/admin/suites/${suiteId}/calendar`;
     }
 
-    function editHouseHeader() {
-        window.location.href = '{{ route("admin.dashboard") }}';
-    }
     @endif
     
     @if(auth()->user()->isOwner())
@@ -773,4 +782,7 @@ function viewSuiteGallery(suiteId) {
 }
 </script>
 @endpush
+<!-- Include Owner Info Modal Component -->
+@include('components.owner-info-modal')
+
 @endsection

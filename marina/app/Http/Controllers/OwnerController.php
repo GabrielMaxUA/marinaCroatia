@@ -45,7 +45,7 @@ class OwnerController extends Controller
             }
         }
 
-        return view('owner.dashboard', compact('houses', 'totalBookings', 'activeBookings'));
+        return redirect()->route('home');
     }
 
     public function house(House $house)

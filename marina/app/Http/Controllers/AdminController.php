@@ -10,22 +10,45 @@ use App\Models\Suite;
 use App\Models\Booking;
 use App\Models\BookingDate;
 use App\Models\SiteContent;
+use App\Models\BankInfo;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    public function dashboard()
-    {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, 'Access denied. Admin privileges required.');
-        }
-        $locations = Location::with('houses.suites')->get();
-        $mainHeading = SiteContent::get('main_heading', 'Luxury Croatian Accommodations');
-        $mainDescription = SiteContent::get('main_description', 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.');
+    // public function dashboard()
+    // {
+    //     if (!Auth::user()->isAdmin()) {
+    //         abort(403, 'Access denied. Admin privileges required.');
+    //     }
+    //     $locations = Location::with('houses.suites')->get();
+    //     $mainHeading = SiteContent::get('main_heading', 'Luxury Croatian Accommodations');
+    //     $mainDescription = SiteContent::get('main_description', 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.');
         
-        return view('admin.dashboard', compact('locations', 'mainHeading', 'mainDescription'));
+    //     return view('admin.dashboard', compact('locations', 'mainHeading', 'mainDescription'));
+    // }
+
+    public function locations(Request $request)
+    {
+        $query = Location::with(['houses.suites', 'houses.owner']);
+        
+        // Apply search filter
+        if ($request->search) {
+            $query->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('description', 'LIKE', '%' . $request->search . '%');
+        }
+        
+        $locations = $query->orderBy('name')->paginate(12);
+        $owners = User::where('role', 'owner')->where('is_active', true)->orderBy('first_name')->get();
+        
+        // Check if we need to edit a location
+        $editLocation = null;
+        if ($request->edit) {
+            $editLocation = Location::find($request->edit);
+        }
+        
+        return view('admin.locations', compact('locations', 'owners', 'editLocation'));
     }
 
     public function houses(Request $request)
@@ -84,6 +107,44 @@ class AdminController extends Controller
         $locations = Location::all();
         
         return view('admin.owners', compact('owners', 'locations'));
+    }
+
+    public function getOwnerInfo($ownerId)
+    {
+        try {
+            $owner = User::where('role', 'owner')
+                        ->withCount(['houses', 'houses as suites_count' => function($query) {
+                            $query->join('suites', 'houses.id', '=', 'suites.house_id');
+                        }])
+                        ->findOrFail($ownerId);
+
+            $bankInfo = BankInfo::where('owner_id', $ownerId)
+                               ->where('is_active', true)
+                               ->first();
+
+            return response()->json([
+                'success' => true,
+                'owner' => [
+                    'full_name' => $owner->full_name,
+                    'email' => $owner->email,
+                    'phone' => $owner->phone,
+                    'houses_count' => $owner->houses_count,
+                    'suites_count' => $owner->suites_count ?: 0,
+                ],
+                'bankInfo' => $bankInfo ? [
+                    'bank_name' => $bankInfo->bank_name,
+                    'account_number' => $bankInfo->account_number,
+                    'iban' => $bankInfo->iban,
+                    'swift' => $bankInfo->swift,
+                    'bank_address' => $bankInfo->bank_address,
+                ] : null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Owner not found or error loading data'
+            ], 404);
+        }
     }
 
     public function createOwner(Request $request)
@@ -183,6 +244,14 @@ class AdminController extends Controller
         ]);
     }
 
+    public function getLocation(Location $location)
+    {
+        return response()->json([
+            'success' => true,
+            'location' => $location
+        ]);
+    }
+
     public function createLocation(Request $request)
     {
         $request->validate([
@@ -196,11 +265,16 @@ class AdminController extends Controller
             'created_by' => Auth::id()
         ]);
 
-        return response()->json([
-            'success' => true,
-            'location' => $location,
-            'message' => 'Location created successfully'
-        ]);
+        // Check if this is an AJAX request (from welcome page) or regular form submission
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'location' => $location,
+                'message' => 'Location created successfully'
+            ]);
+        }
+
+        return redirect()->route('admin.locations')->with('success', 'Location created successfully');
     }
 
     public function updateLocation(Request $request, Location $location)
@@ -212,11 +286,16 @@ class AdminController extends Controller
 
         $location->update($request->only(['name', 'description']));
 
-        return response()->json([
-            'success' => true,
-            'location' => $location,
-            'message' => 'Location updated successfully'
-        ]);
+        // Check if this is an AJAX request (from welcome page) or regular form submission
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'location' => $location,
+                'message' => 'Location updated successfully'
+            ]);
+        }
+
+        return redirect()->route('admin.locations')->with('success', 'Location updated successfully');
     }
 
     public function deleteLocation(Location $location)
@@ -544,6 +623,7 @@ class AdminController extends Controller
         }
     }
 
+
     public function updateBooking(Request $request, Booking $booking)
     {
         if ($booking->is_owner_booking && !$request->has('force_admin_edit')) {
@@ -612,6 +692,16 @@ class AdminController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Booking cancelled successfully'
+        ]);
+    }
+
+    public function getHouse(House $house)
+    {
+        $house->load(['location', 'owner', 'suites']);
+        
+        return response()->json([
+            'success' => true,
+            'house' => $house
         ]);
     }
 

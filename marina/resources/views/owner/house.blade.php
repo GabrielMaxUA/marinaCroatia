@@ -6,7 +6,7 @@
 <div class="container">
     <!-- Breadcrumb -->
     <nav style="margin-bottom: 2rem;">
-        <a href="{{ route('owner.dashboard') }}" style="color: #3b82f6; text-decoration: none;">← Back to Dashboard</a>
+        <a href="{{ route('home') }}" style="color: #3b82f6; text-decoration: none;">← Back to Home</a>
     </nav>
 
     <!-- House Details -->

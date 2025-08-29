@@ -86,6 +86,9 @@
                             <button class="action-btn edit" onclick="editHouse({{ $house->id }})" title="Edit House">
                                 ✏️
                             </button>
+                            <button class="action-btn bank" onclick="viewOwnerInfo({{ $house->owner->id }}, '{{ $house->name }}')" title="Owner & Bank Info">
+                                🏦
+                            </button>
                             <button class="action-btn calendar" onclick="viewHouseBookings({{ $house->id }})" title="View Bookings">
                                 📅
                             </button>
@@ -437,6 +440,12 @@
         border-color: #fbbf24;
     }
     
+    .action-btn.bank:hover {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+    }
+    
     .action-btn.calendar:hover {
         background: #3b82f6;
         color: white;
@@ -731,4 +740,8 @@ document.getElementById('house-modal').addEventListener('click', function(e) {
 });
 </script>
 @endpush
+
+<!-- Include Owner Info Modal Component -->
+@include('components.owner-info-modal')
+
 @endsection

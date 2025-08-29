@@ -10,7 +10,7 @@
             <h1>My Bookings</h1>
             <p style="color: #6b7280;">Manage your property bookings</p>
         </div>
-        <a href="{{ route('owner.dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="{{ route('home') }}" class="btn btn-secondary">← Back to Home</a>
     </div>
 
     <!-- Filters -->
@@ -167,7 +167,7 @@
                     @endif
                 </p>
                 <div style="margin-top: 2rem;">
-                    <a href="{{ route('owner.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+                    <a href="{{ route('home') }}" class="btn btn-primary">Go to Home</a>
                 </div>
             </div>
         </div>

@@ -77,11 +77,12 @@
                         <button class="action-btn reset" onclick="resetOwnerPassword({{ $owner->id }})" title="Reset Password">
                             🔑
                         </button>
-                        <button class="action-btn {{ $owner->is_active ? 'deactivate' : 'activate' }}" 
-                                onclick="toggleOwnerStatus({{ $owner->id }}, {{ $owner->is_active ? 'false' : 'true' }})" 
-                                title="{{ $owner->is_active ? 'Deactivate' : 'Activate' }}">
-                            {{ $owner->is_active ? '⏸️' : '▶️' }}
-                        </button>
+                      <button class="action-btn {{ $owner->is_active ? 'deactivate' : 'activate' }}" 
+                        onclick="toggleOwnerStatus({{ $owner->id }}, {{ $owner->is_active ? 'true' : 'false' }})" 
+                        title="{{ $owner->is_active ? 'Deactivate' : 'Activate' }}">
+                        {{ $owner->is_active ? '⏸️' : '▶️' }}
+                      </button>
+
                         <button class="action-btn delete" onclick="deleteOwner({{ $owner->id }})" title="Delete Owner">
                             🗑️
                         </button>
@@ -118,7 +119,20 @@
                         <span class="label">Total Suites:</span>
                         <span class="value">{{ $owner->houses->sum(fn($h) => $h->suites->count()) }} Suites</span>
                     </div>
+                    <div class="detail-item">
+                      <span class="label">Bank Info:</span>
+                      <span class="value">
+                          @foreach($owner->houses as $house)
+                              @if($house->bank_name || $house->bank_account_number)
+                                  <div>{{ $house->bank_name ?? 'N/A' }} 
+                                      @if($house->bank_account_number) - {{ $house->bank_account_number }} @endif
+                                  </div>
+                              @endif
+                          @endforeach
+                      </span>
+                    </div>
                 </div>
+                
                 
                 <div class="owner-footer">
                     <button class="btn btn-outline" onclick="viewOwnerProperties({{ $owner->id }}, '{{ $owner->full_name }}')">
@@ -588,15 +602,16 @@ function resetOwnerPassword(id) {
     }
 }
 
-function toggleOwnerStatus(id, activate) {
-    const action = activate === 'true' ? 'activate' : 'deactivate';
-    const actionPast = activate === 'true' ? 'activated' : 'deactivated';
-    const status = activate === 'true' ? 'ACTIVE' : 'INACTIVE';
+function toggleOwnerStatus(id, isCurrentlyActive) {
+    const willActivate = !isCurrentlyActive; // flip the current state
+
+    const action = willActivate ? 'activate' : 'deactivate';
+    const actionPast = willActivate ? 'activated' : 'deactivated';
+    const status = willActivate ? 'ACTIVE' : 'INACTIVE';
     
     if (confirm(`Are you sure you want to ${action} this owner?\nThe owner status will be set to: ${status}`)) {
         const formData = new FormData();
-        // Convert string to boolean value
-        formData.append('is_active', activate === 'true' ? '1' : '0');
+        formData.append('is_active', willActivate ? '1' : '0');
         formData.append('_method', 'PUT');
         
         fetch(`{{ url('admin/owners') }}/${id}`, {
@@ -607,19 +622,14 @@ function toggleOwnerStatus(id, activate) {
             }
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();
         })
         .then(data => {
             if (data.success) {
                 showAlert(`Owner has been ${actionPast} successfully!`, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                setTimeout(() => window.location.reload(), 1000);
             } else {
-                console.error('Toggle status error:', data);
                 showAlert(data.message || 'An error occurred', 'error');
             }
         })
@@ -629,6 +639,7 @@ function toggleOwnerStatus(id, activate) {
         });
     }
 }
+
 
 function viewOwnerProperties(ownerId, ownerName) {
     // Navigate to houses page filtered by this owner

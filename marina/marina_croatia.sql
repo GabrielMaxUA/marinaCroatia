@@ -42,6 +42,32 @@ CREATE TABLE `activity_logs` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `bank_info`
+--
+
+CREATE TABLE `bank_info` (
+  `id` int(11) NOT NULL,
+  `owner_id` int(11) NOT NULL,
+  `bank_name` varchar(100) NOT NULL,
+  `swift` varchar(20) DEFAULT NULL,
+  `bank_address` text DEFAULT NULL,
+  `account_number` varchar(50) NOT NULL,
+  `iban` varchar(34) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_active` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `bank_info`
+--
+
+INSERT INTO `bank_info` (`id`, `owner_id`, `bank_name`, `swift`, `bank_address`, `account_number`, `iban`, `created_at`, `updated_at`, `is_active`) VALUES
+(1, 4, 'Erste Bank Croatia', 'ERSBHR22', 'Ivana Lučića 2, 10000 Zagreb, Croatia', 'kjhgkja111', 'HR1224020061100000000', '2025-08-29 10:00:00', '2025-08-29 10:00:00', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `bookings`
 --
 
@@ -186,10 +212,6 @@ CREATE TABLE `houses` (
   `parking_available` tinyint(1) DEFAULT 0,
   `parking_description` text DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `owner_phone` varchar(20) DEFAULT NULL,
-  `owner_email` varchar(255) DEFAULT NULL,
-  `bank_account_number` varchar(50) DEFAULT NULL,
-  `bank_name` varchar(100) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `is_active` tinyint(1) DEFAULT 1
@@ -199,8 +221,8 @@ CREATE TABLE `houses` (
 -- Dumping data for table `houses`
 --
 
-INSERT INTO `houses` (`id`, `location_id`, `owner_id`, `name`, `street_address`, `house_number`, `distance_to_sea`, `parking_available`, `parking_description`, `description`, `owner_phone`, `owner_email`, `bank_account_number`, `bank_name`, `created_at`, `updated_at`, `is_active`) VALUES
-(1, 1, 4, 'villa costa', 'Ulica Obale', '12', '50 m to the sea', 0, NULL, 'Sea-view villa', '4168560684', 'maxim.don.mg@gmail.com', 'kjhgkja111', 'bmo', '2025-08-26 22:53:28', '2025-08-28 03:46:10', 1);
+INSERT INTO `houses` (`id`, `location_id`, `owner_id`, `name`, `street_address`, `house_number`, `distance_to_sea`, `parking_available`, `parking_description`, `description`, `created_at`, `updated_at`, `is_active`) VALUES
+(1, 1, 4, 'villa costa', 'Ulica Obale', '12', '50 m to the sea', 0, NULL, 'Sea-view villa', '2025-08-26 22:53:28', '2025-08-28 03:46:10', 1);
 
 -- --------------------------------------------------------
 
@@ -443,6 +465,14 @@ ALTER TABLE `activity_logs`
   ADD KEY `idx_created` (`created_at`);
 
 --
+-- Indexes for table `bank_info`
+--
+ALTER TABLE `bank_info`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_owner` (`owner_id`),
+  ADD KEY `idx_active` (`is_active`);
+
+--
 -- Indexes for table `bookings`
 --
 ALTER TABLE `bookings`
@@ -575,6 +605,12 @@ ALTER TABLE `activity_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `bank_info`
+--
+ALTER TABLE `bank_info`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
@@ -655,6 +691,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `activity_logs`
   ADD CONSTRAINT `activity_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `bank_info`
+--
+ALTER TABLE `bank_info`
+  ADD CONSTRAINT `bank_info_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `bookings`

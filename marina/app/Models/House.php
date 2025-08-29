@@ -21,10 +21,6 @@ class House extends Model
         'parking_available',
         'parking_description',
         'description',
-        'owner_phone',
-        'owner_email',
-        'bank_account_number',
-        'bank_name',
         'is_active'
     ];
 

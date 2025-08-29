@@ -10,7 +10,7 @@
             <h1>My Profile</h1>
             <p style="color: #6b7280;">Manage your account settings and preferences</p>
         </div>
-        <a href="{{ route('owner.dashboard') }}" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="{{ route('home') }}" class="btn btn-secondary">← Back to Home</a>
     </div>
 
     <!-- Success Message -->

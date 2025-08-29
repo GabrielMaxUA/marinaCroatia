@@ -34,11 +34,7 @@ class AuthController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
 
-        if ($user->isAdmin()) {
-            return redirect()->route('admin.dashboard');
-        } else {
-            return redirect()->route('owner.dashboard');
-        }
+        return redirect()->route('home');
     }
 
     public function logout(Request $request)

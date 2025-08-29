@@ -53,31 +53,11 @@
             font-weight: bold;
         }
 
-        .user-menu {
+        .login-btn {
             position: absolute;
             right: 2rem;
             top: 50%;
             transform: translateY(-50%);
-            display: inline-block;
-        }
-
-        .user-icon {
-            width: 40px;
-            height: 40px;
-            background: #f0f0f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .user-icon:hover {
-            background: #e0e0e0;
-        }
-
-        .login-btn {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -96,37 +76,73 @@
             color: white;
         }
 
-        .user-dropdown {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            min-width: 200px;
-            z-index: 1000;
-            margin-top: 0.5rem;
+        /* Navigation Bar */
+        .navbar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .user-dropdown.active {
-            display: block;
+        .navbar-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
         }
 
-        .dropdown-item {
-            display: block;
-            padding: 12px 16px;
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: #64748b;
             text-decoration: none;
-            color: #333;
-            border-bottom: 1px solid #f0f0f0;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.875rem;
         }
 
-        .dropdown-item:hover {
-            background: #f8f9fa;
+        .nav-link:hover {
+            color: #3b82f6;
+            background: #eff6ff;
         }
 
-        .dropdown-item:last-child {
-            border-bottom: none;
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-name {
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
         }
 
         /* Admin/Owner Header */
@@ -139,62 +155,59 @@
             padding: 12px 24px;
         }
 
-        .admin-logo {
-            font-size: 18px;
-            font-weight: bold;
-        }
 
-        .admin-badge {
-            background: #22c55e;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: bold;
-        }
 
-        .owner-badge {
-            background: #3b82f6;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .admin-controls {
+        .nav-item {
             display: flex;
-            gap: 10px;
-        }
-
-        .admin-btn {
-            background: #334155;
-            color: #fff;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: #64748b;
             text-decoration: none;
-            display: inline-block;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
         }
 
-        .admin-btn:hover {
-            background: #475569;
+        .nav-item:hover {
+            color: #3b82f6;
+            background: #eff6ff;
         }
 
-        .admin-btn.success {
-            background: #22c55e;
+        .nav-item.active {
+            color: #3b82f6;
+            background: #dbeafe;
+            font-weight: 600;
         }
 
-        .admin-btn.success:hover {
-            background: #16a34a;
+        .nav-user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .admin-btn.danger {
-            background: #ef4444;
+        .user-role {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .admin-btn.danger:hover {
-            background: #dc2626;
+        .user-role.admin {
+            background: #fecaca;
+            color: #dc2626;
+        }
+
+        .user-role.owner {
+            background: #dbeafe;
+            color: #3b82f6;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #374151;
         }
 
         /* Main Content */
@@ -225,7 +238,6 @@
         }
 
         .edit-btn {
-            position: absolute;
             top: 12px;
             right: 12px;
             border: none;
@@ -535,6 +547,23 @@
             .container {
                 padding: 1rem;
             }
+
+            .navbar-container {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
             
             .main-title h1 {
                 font-size: 2rem;
@@ -554,66 +583,43 @@
     <header class="header">
         <a href="{{ url('/') }}" class="logo">MarinaCroatia.com</a>
         
-        <div class="user-menu">
-            @auth
-                <div class="user-icon" onclick="toggleUserDropdown()">
-                    @if(auth()->user()->isAdmin())
-                        <span>A</span>
-                    @elseif(auth()->user()->isOwner())
-                        <span>O</span>
-                    @else
-                        <span>U</span>
-                    @endif
-                </div>
-                <div id="user-dropdown" class="user-dropdown">
-                    @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin.dashboard') }}" class="dropdown-item">🏠 Dashboard</a>
-                        <a href="{{ route('admin.owners') }}" class="dropdown-item">👥 Owners</a>
-                        <a href="{{ route('admin.bookings') }}" class="dropdown-item">📅 Bookings</a>
-                        <div style="border-top: 1px solid #f0f0f0; margin: 0.5rem 0;"></div>
-                    @elseif(auth()->user()->isOwner())
-                        <a href="{{ route('owner.dashboard') }}" class="dropdown-item">🏠 Dashboard</a>
-                        <a href="{{ route('owner.bookings') }}" class="dropdown-item">📅 My Bookings</a>
-                        <a href="{{ route('owner.profile') }}" class="dropdown-item">👤 Profile</a>
-                        <div style="border-top: 1px solid #f0f0f0; margin: 0.5rem 0;"></div>
-                    @endif
-                    <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
-                        @csrf
-                        <button type="submit" class="dropdown-item" style="width: 100%; text-align: left; border: none; background: none; cursor: pointer;">🚪 Logout</button>
-                    </form>
-                </div>
-            @else
-                <a href="{{ route('login') }}" class="login-btn">
-                    👤 Login
-                </a>
-            @endauth
-        </div>
+        @guest
+            <a href="{{ route('login') }}" class="login-btn">
+                👤 Login
+            </a>
+        @endguest
     </header>
 
-    @if(auth()->check())
-        @if(auth()->user()->isAdmin())
-            <div class="admin-header">
-                <div class="admin-logo">ADMIN PANEL</div>
-                <div class="admin-badge">ADMIN MODE</div>
-                <div class="admin-controls">
-                    <a href="{{ route('admin.dashboard') }}" class="admin-btn">Dashboard</a>
-                    <a href="{{ route('admin.houses') }}" class="admin-btn">Houses</a>
-                    <a href="{{ route('admin.owners') }}" class="admin-btn">Owners</a>
-                    <a href="{{ route('admin.bookings') }}" class="admin-btn">Bookings</a>
-                </div>
+    <!-- Navigation Bar for Logged-in Users -->
+    @auth
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="nav-links">
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('admin.locations') }}" class="nav-link">🏖️ Locations</a>
+                    <a href="{{ route('admin.houses') }}" class="nav-link">🏘️ Houses</a>
+                    <a href="{{ route('admin.owners') }}" class="nav-link">👥 Owners</a>
+                    @if(auth()->user()->isAdmin())
+    <a href="{{ route('admin.bookings') }}" class="nav-link">📅 All Bookings</a>
+@elseif(auth()->user()->isOwner())
+    <a href="{{ route('owner.bookings') }}" class="nav-link">📅 My Bookings</a>
+@endif
+                    <a href="{{ route('admin.calendar') }}" class="nav-link">📆 Calendar</a>
+                @elseif(auth()->user()->isOwner())
+                    <a href="{{ route('bookings') }}" class="nav-link">📅 My Bookings</a>
+                    <a href="{{ route('owner.profile') }}" class="nav-link">👤 Profile</a>
+                @endif
             </div>
-        @elseif(auth()->user()->isOwner())
-            <div class="admin-header">
-                <div class="admin-logo">OWNER PANEL</div>
-                <div class="owner-badge">{{ auth()->user()->full_name }}</div>
-                <div class="admin-controls">
-                    <a href="{{ route('owner.dashboard') }}" class="admin-btn">Dashboard</a>
-                    <a href="{{ route('owner.bookings') }}" class="admin-btn">Bookings</a>
-                    <a href="{{ route('owner.profile') }}" class="admin-btn">Profile</a>
-                </div>
+            <div class="user-info">
+                <span class="user-name">{{ auth()->user()->full_name }}</span>
+                <form action="{{ route('logout') }}" method="POST" style="display: inline; margin-left: 1rem;">
+                    @csrf
+                    <button type="submit" class="logout-btn">🚪 Logout</button>
+                </form>
             </div>
-        @endif
-    @endif
+        </div>
+    </nav>
+    @endauth
 
     @yield('content')
 
