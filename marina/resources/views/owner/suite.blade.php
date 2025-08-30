@@ -5,10 +5,10 @@
 @section('content')
 <div class="container">
     <!-- Breadcrumb -->
-    <nav style="margin-bottom: 2rem;">
+    <!-- <nav style="margin-bottom: 2rem;">
         <a href="{{ route('home') }}" class="btn btn-secondary">← Home</a>
         <a href="{{ route('owner.house', $suite->house) }}" class="btn btn-secondary">{{ $suite->house->name }}</a>
-    </nav>
+    </nav> -->
 
     <!-- Suite Details -->
     <div class="card" style="margin-bottom: 2rem;">

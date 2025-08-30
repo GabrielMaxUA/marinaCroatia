@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Breadcrumb -->
-<div class="breadcrumb-container">
+<!-- <div class="breadcrumb-container">
     <div class="container">
         <nav class="breadcrumb">
             <a href="{{ route('home') }}">Home</a>
@@ -14,7 +14,7 @@
             <span class="current">{{ $house->name }}</span>
         </nav>
     </div>
-</div>
+</div> -->
 
 <!-- House Header -->
 <section class="house-header">

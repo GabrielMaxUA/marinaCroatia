@@ -283,7 +283,7 @@ class AdminController extends Controller
 
     public function locations(Request $request)
     {
-        $query = Location::with(['houses.suites', 'houses.owner']);
+        $query = Location::with(['houses.suites', 'houses.owner', 'primaryImage']);
         
         // Apply search filter
         if ($request->search) {

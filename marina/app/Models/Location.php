@@ -81,4 +81,6 @@ class Location extends Model
     {
         return $this->videos()->count();
     }
+
+    
 }

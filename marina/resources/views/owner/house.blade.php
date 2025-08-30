@@ -5,9 +5,9 @@
 @section('content')
 <div class="container">
     <!-- Breadcrumb -->
-    <nav style="margin-bottom: 2rem;">
+    <!-- <nav style="margin-bottom: 2rem;">
         <a href="{{ route('home') }}" style="color: #3b82f6; text-decoration: none;">← Back to Home</a>
-    </nav>
+    </nav> -->
 
     <!-- House Details -->
     <div class="card" style="margin-bottom: 2rem;">

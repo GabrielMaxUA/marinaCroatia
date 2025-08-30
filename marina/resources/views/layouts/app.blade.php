@@ -23,6 +23,7 @@
         /* Header */
         .header {
             display: flex;
+            position: absolute;
             justify-content: center;
             align-items: center;
             padding: 1rem 2rem;
