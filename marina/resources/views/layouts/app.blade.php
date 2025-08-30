@@ -26,12 +26,12 @@
           top: 0;
           left: 0;
           width: 100%;
-          padding: 1rem 2rem;
+          padding: 0 2rem;
           display: flex;
           justify-content: space-between; /* Home left, Login right */
           align-items: center;
           z-index: 100;
-          background: transparent; /* or rgba(0,0,0,0.4) for slight overlay */
+          background: rgba(0,0,0,0.4); /* or rgba(0,0,0,0.4) for slight overlay */
         }
 
         .logo {
@@ -82,31 +82,33 @@
 
         /* Navigation Bar */
         .navbar {
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 75%;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .navbar-container {
-            max-width: 1200px;
-            margin: 0 auto;
             display: flex;
-            justify-content: space-between;
+            justify-content: end;
             align-items: center;
-            padding: 1rem 2rem;
         }
 
         .nav-links {
             display: flex;
             gap: 2rem;
+            padding: 0.5rem 1rem;
         }
 
         .nav-link {
             display: flex;
+            flex-direction: row;
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
-            color: #64748b;
+            color: #fdfdfdff;
             text-decoration: none;
             font-weight: 500;
             border-radius: 6px;
@@ -124,10 +126,9 @@
             align-items: center;
         }
 
-        .user-name {
-            color: #374151;
-            font-weight: 500;
-            font-size: 0.875rem;
+         .user-name {
+            font-weight: 600;
+            color: #ffffffff;
         }
 
         .logout-btn {
@@ -209,10 +210,6 @@
             color: #3b82f6;
         }
 
-        .user-name {
-            font-weight: 600;
-            color: #374151;
-        }
 
         /* Main Content */
         .container {
@@ -592,13 +589,10 @@
                 👤 Login
             </a>
         @endguest
-    </header>
-
-    <!-- Navigation Bar for Logged-in Users -->
+            <!-- Navigation Bar for Logged-in Users -->
     @auth
     <nav class="navbar">
-        <div class="navbar-container">
-            <div class="nav-links">
+       <div class="nav-links">
                 @if(auth()->user()->isAdmin())
                     <a href="{{ route('admin.locations') }}" class="nav-link">🏖️ Locations</a>
                     <a href="{{ route('admin.houses') }}" class="nav-link">🏘️ Houses</a>
@@ -610,7 +604,8 @@
                     <a href="{{ route('owner.bookings') }}" class="nav-link">📅 My Bookings</a>
                     <a href="{{ route('owner.profile') }}" class="nav-link">👤 Profile</a>
                 @endif
-            </div>
+        </div>
+        <div class="navbar-container">
             <div class="user-info">
                 <span class="user-name">{{ auth()->user()->full_name }}</span>
                 <form action="{{ route('logout') }}" method="POST" style="display: inline; margin-left: 1rem;">
@@ -621,6 +616,9 @@
         </div>
     </nav>
     @endauth
+    </header>
+
+
 
     @yield('content')
 
