@@ -14,9 +14,272 @@ use App\Models\BankInfo;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\LocationMedia;
 
 class AdminController extends Controller
 {
+    /**
+     * Optimize and convert image to WebP format using native PHP GD
+     */
+    private function optimizeImage($uploadedFile, $maxWidth = 1920, $maxHeight = 1080, $quality = 80)
+    {
+        try {
+            // Check if GD extension and WebP support are available
+            if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+                throw new \Exception('GD extension or WebP support is not available');
+            }
+
+            // Get image info
+            $imageInfo = getimagesize($uploadedFile->getPathname());
+            if (!$imageInfo) {
+                throw new \Exception('Invalid image file');
+            }
+
+            list($originalWidth, $originalHeight, $imageType) = $imageInfo;
+
+            // Create image resource from uploaded file
+            switch ($imageType) {
+                case IMAGETYPE_JPEG:
+                    $sourceImage = imagecreatefromjpeg($uploadedFile->getPathname());
+                    break;
+                case IMAGETYPE_PNG:
+                    $sourceImage = imagecreatefrompng($uploadedFile->getPathname());
+                    break;
+                case IMAGETYPE_GIF:
+                    $sourceImage = imagecreatefromgif($uploadedFile->getPathname());
+                    break;
+                case IMAGETYPE_WEBP:
+                    $sourceImage = imagecreatefromwebp($uploadedFile->getPathname());
+                    break;
+                default:
+                    throw new \Exception('Unsupported image type');
+            }
+
+            if (!$sourceImage) {
+                throw new \Exception('Failed to create image resource');
+            }
+
+            // Calculate new dimensions while maintaining aspect ratio
+            $aspectRatio = $originalWidth / $originalHeight;
+            
+            if ($originalWidth > $maxWidth || $originalHeight > $maxHeight) {
+                if ($maxWidth / $maxHeight > $aspectRatio) {
+                    $newHeight = $maxHeight;
+                    $newWidth = intval($maxHeight * $aspectRatio);
+                } else {
+                    $newWidth = $maxWidth;
+                    $newHeight = intval($maxWidth / $aspectRatio);
+                }
+            } else {
+                $newWidth = $originalWidth;
+                $newHeight = $originalHeight;
+            }
+
+            // Create new image
+            $newImage = imagecreatetruecolor($newWidth, $newHeight);
+            
+            // Preserve transparency for PNG
+            if ($imageType === IMAGETYPE_PNG) {
+                imagealphablending($newImage, false);
+                imagesavealpha($newImage, true);
+                $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+                imagefilledrectangle($newImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+
+            // Resize image
+            imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+            // Generate unique filename with webp extension
+            $filename = 'background_' . time() . '_' . uniqid() . '.webp';
+            $directory = 'backgrounds';
+            
+            // Ensure the storage link exists for public access
+            if (!file_exists(public_path('storage'))) {
+                Artisan::call('storage:link');
+            }
+            
+            $fullPath = storage_path('app/public/' . $directory);
+            
+            // Create directory if it doesn't exist
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
+            
+            $filePath = $fullPath . '/' . $filename;
+
+            // Save as WebP
+            $success = imagewebp($newImage, $filePath, $quality);
+
+            // Clean up memory
+            imagedestroy($sourceImage);
+            imagedestroy($newImage);
+
+            if (!$success) {
+                throw new \Exception('Failed to save WebP image');
+            }
+
+            return $directory . '/' . $filename;
+            
+        } catch (\Exception $e) {
+            // Fallback: use original file upload method
+            Log::warning('Image optimization failed: ' . $e->getMessage());
+            return $uploadedFile->store('backgrounds', 'public');
+        }
+    }
+
+    /**
+     * Fast location media optimization - Performance optimized
+     */
+    private function optimizeLocationMedia($uploadedFile, $mediaType = 'image', $maxWidth = 800, $maxHeight = 600, $quality = 70)
+    {
+        try {
+            if ($mediaType === 'video') {
+                // For videos, just store directly - no processing needed
+                return $uploadedFile->store('locations/videos', 'public');
+            }
+
+            $fileSize = $uploadedFile->getSize();
+            
+            // Skip processing for small images (under 1MB) - just store them
+            if ($fileSize < 1024 * 1024) {
+                return $uploadedFile->store('locations/images', 'public');
+            }
+
+            // Quick dimension check
+            $imageInfo = @getimagesize($uploadedFile->getPathname());
+            if (!$imageInfo) {
+                // If we can't get image info, just store it
+                return $uploadedFile->store('locations/images', 'public');
+            }
+
+            list($originalWidth, $originalHeight, $imageType) = $imageInfo;
+
+            // Skip processing if image is already small enough
+            if ($originalWidth <= $maxWidth && $originalHeight <= $maxHeight) {
+                return $uploadedFile->store('locations/images', 'public');
+            }
+
+            // Only process if we have GD and WebP support
+            if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+                return $uploadedFile->store('locations/images', 'public');
+            }
+
+            // Quick image creation with error handling
+            $sourceImage = null;
+            switch ($imageType) {
+                case IMAGETYPE_JPEG:
+                    $sourceImage = @imagecreatefromjpeg($uploadedFile->getPathname());
+                    break;
+                case IMAGETYPE_PNG:
+                    $sourceImage = @imagecreatefrompng($uploadedFile->getPathname());
+                    break;
+                case IMAGETYPE_WEBP:
+                    $sourceImage = @imagecreatefromwebp($uploadedFile->getPathname());
+                    break;
+                default:
+                    // Unsupported types, store as-is
+                    return $uploadedFile->store('locations/images', 'public');
+            }
+
+            if (!$sourceImage) {
+                // If image creation fails, store original
+                return $uploadedFile->store('locations/images', 'public');
+            }
+
+            // Fast dimension calculation
+            $aspectRatio = $originalWidth / $originalHeight;
+            
+            if ($aspectRatio > 1) {
+                // Landscape
+                $newWidth = $maxWidth;
+                $newHeight = intval($maxWidth / $aspectRatio);
+            } else {
+                // Portrait or square
+                $newHeight = $maxHeight;
+                $newWidth = intval($maxHeight * $aspectRatio);
+            }
+
+            // Create new image
+            $newImage = imagecreatetruecolor($newWidth, $newHeight);
+            
+            // Simple resampling - no transparency handling for speed
+            imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+            // Generate path
+            $filename = 'loc_' . time() . '_' . uniqid() . '.webp';
+            $directory = 'locations/images';
+            $fullPath = storage_path('app/public/' . $directory);
+            
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
+            
+            // Save with lower quality for speed
+            $success = @imagewebp($newImage, $fullPath . '/' . $filename, $quality);
+
+            // Immediate cleanup
+            imagedestroy($sourceImage);
+            imagedestroy($newImage);
+
+            if ($success) {
+                return $directory . '/' . $filename;
+            }
+            
+        } catch (\Exception $e) {
+            Log::warning('Fast image optimization failed: ' . $e->getMessage());
+        }
+
+        // Fallback - store original file
+        return $uploadedFile->store('locations/images', 'public');
+    }
+
+    /**
+     * Handle location media uploads - Optimized for performance
+     */
+    private function handleLocationMediaUploads($location, $request)
+    {
+        $mediaFiles = $request->file('media_files');
+        $mediaTitles = $request->input('media_titles', []);
+        $primaryMediaIndex = $request->input('primary_media');
+
+        // Process files in batches for better performance
+        $batchSize = 3; // Process max 3 files with optimization
+        $processed = 0;
+
+        foreach ($mediaFiles as $index => $file) {
+            $mediaType = str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image';
+            
+            // For performance, skip heavy processing after processing some files
+            if ($processed >= $batchSize && $mediaType === 'image' && $file->getSize() > 5 * 1024 * 1024) {
+                // For large images after batch limit, just store directly
+                $mediaPath = $file->store('locations/images', 'public');
+            } else {
+                $mediaPath = $this->optimizeLocationMedia($file, $mediaType);
+                if ($mediaType === 'image') $processed++;
+            }
+            
+            $isPrimary = ($index == $primaryMediaIndex);
+            
+            // If this is set as primary, make sure no other media is primary for this location
+            if ($isPrimary) {
+                LocationMedia::where('location_id', $location->id)
+                    ->where('media_type', $mediaType)
+                    ->update(['is_primary' => false]);
+            }
+
+            LocationMedia::create([
+                'location_id' => $location->id,
+                'media_type' => $mediaType,
+                'media_url' => $mediaPath,
+                'media_title' => $mediaTitles[$index] ?? null,
+                'display_order' => $index,
+                'is_primary' => $isPrimary
+            ]);
+        }
+    }
 
     public function locations(Request $request)
     {
@@ -40,32 +303,6 @@ class AdminController extends Controller
         return view('admin.locations', compact('locations', 'owners', 'editLocation'));
     }
 
-    public function houses(Request $request)
-    {
-        $query = House::with(['location', 'owner', 'suites', 'images']);
-        
-        // Apply filters
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'LIKE', '%' . $request->search . '%')
-                  ->orWhere('street_address', 'LIKE', '%' . $request->search . '%');
-            });
-        }
-        
-        if ($request->location_id) {
-            $query->where('location_id', $request->location_id);
-        }
-        
-        if ($request->owner_id) {
-            $query->where('owner_id', $request->owner_id);
-        }
-        
-        $houses = $query->paginate(12);
-        $locations = Location::all();
-        $owners = User::where('role', 'owner')->get();
-        
-        return view('admin.houses', compact('houses', 'locations', 'owners'));
-    }
 
     public function owners(Request $request)
     {
@@ -235,6 +472,9 @@ class AdminController extends Controller
 
     public function getLocation(Location $location)
     {
+        // Load media with all details for admin editing
+        $location->load('media');
+        
         return response()->json([
             'success' => true,
             'location' => $location
@@ -243,48 +483,160 @@ class AdminController extends Controller
 
     public function createLocation(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:100|unique:locations,name',
-            'description' => 'nullable|string'
-        ]);
-
-        $location = Location::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'created_by' => Auth::id()
-        ]);
-
-        // Check if this is an AJAX request (from welcome page) or regular form submission
-        if ($request->expectsJson() || $request->ajax()) {
+        // Increase memory limit and execution time for file processing
+        ini_set('memory_limit', '256M');
+        ini_set('max_execution_time', '300'); // 5 minutes
+        
+        // Ensure user is authenticated and authorized
+        if (!auth()->check() || !auth()->user()->isAdmin()) {
             return response()->json([
-                'success' => true,
-                'location' => $location,
-                'message' => 'Location created successfully'
-            ]);
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
         }
 
-        return redirect()->route('admin.locations')->with('success', 'Location created successfully');
+        $request->validate([
+            'name' => 'required|string|max:100|unique:locations,name',
+            'description' => 'nullable|string',
+            'media_files' => 'nullable|array|max:10', // Limit to 10 files max
+            'media_files.*' => 'file|mimes:jpeg,png,jpg,gif,webp,mp4,mov,avi,wmv|max:20480', // Reduced to 20MB for better performance
+            'media_titles' => 'nullable|array',
+            'media_titles.*' => 'nullable|string|max:200',
+            'primary_media' => 'nullable|integer'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            $location = Location::create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'created_by' => Auth::id()
+            ]);
+
+            // Handle media uploads
+            if ($request->hasFile('media_files')) {
+                $this->handleLocationMediaUploads($location, $request);
+            }
+
+            DB::commit();
+            
+            // Load the location with its media and houses for the response
+            $location->load(['media', 'houses', 'primaryImage']);
+
+            // Check if this is an AJAX request (from welcome page) or regular form submission
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson() || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'success' => true,
+                    'location' => [
+                        'id' => $location->id,
+                        'name' => $location->name,
+                        'description' => $location->description,
+                        'houses_count' => $location->houses->count(),
+                        'media_count' => $location->media->count(),
+                        'primary_image_url' => $location->primaryImage ? $location->primaryImage->full_url : null,
+                    ],
+                    'message' => 'Location created successfully'
+                ]);
+            }
+
+            return redirect()->route('admin.locations')->with('success', 'Location created successfully');
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to create location: ' . $e->getMessage());
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create location: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Failed to create location')->withInput();
+        }
     }
 
     public function updateLocation(Request $request, Location $location)
     {
-        $request->validate([
-            'name' => 'required|string|max:100|unique:locations,name,' . $location->id,
-            'description' => 'nullable|string'
-        ]);
-
-        $location->update($request->only(['name', 'description']));
-
-        // Check if this is an AJAX request (from welcome page) or regular form submission
-        if ($request->expectsJson() || $request->ajax()) {
+        // Increase memory limit and execution time for file processing
+        ini_set('memory_limit', '256M');
+        ini_set('max_execution_time', '300'); // 5 minutes
+        
+        // Ensure user is authenticated and authorized
+        if (!auth()->check() || !auth()->user()->isAdmin()) {
             return response()->json([
-                'success' => true,
-                'location' => $location,
-                'message' => 'Location updated successfully'
-            ]);
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
         }
 
-        return redirect()->route('admin.locations')->with('success', 'Location updated successfully');
+        $request->validate([
+            'name' => 'required|string|max:100|unique:locations,name,' . $location->id,
+            'description' => 'nullable|string',
+            'media_files' => 'nullable|array|max:10', // Limit to 10 files max
+            'media_files.*' => 'file|mimes:jpeg,png,jpg,gif,webp,mp4,mov,avi,wmv|max:20480', // 20MB max
+            'media_titles' => 'nullable|array',
+            'media_titles.*' => 'nullable|string|max:200',
+            'primary_media' => 'nullable|integer'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Update location basic info
+            $location->update($request->only(['name', 'description']));
+
+            // Handle media uploads if present
+            if ($request->hasFile('media_files')) {
+                $this->handleLocationMediaUploads($location, $request);
+            }
+
+            DB::commit();
+            
+            // Load the location with its media and houses for the response
+            $location->load(['media', 'houses', 'primaryImage']);
+
+            // Check if this is an AJAX request (from welcome page) or regular form submission
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson() || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'success' => true,
+                    'location' => [
+                        'id' => $location->id,
+                        'name' => $location->name,
+                        'description' => $location->description,
+                        'houses_count' => $location->houses->count(),
+                        'media_count' => $location->media->count(),
+                        'primary_image_url' => $location->primaryImage ? $location->primaryImage->full_url : null,
+                    ],
+                    'message' => 'Location updated successfully'
+                ]);
+            }
+
+            // For the update route, always return JSON since it's only called via AJAX
+            return response()->json([
+                'success' => true,
+                'location' => [
+                    'id' => $location->id,
+                    'name' => $location->name,
+                    'description' => $location->description,
+                    'houses_count' => $location->houses->count(),
+                    'media_count' => $location->media->count(),
+                    'primary_image_url' => $location->primaryImage ? $location->primaryImage->full_url : null,
+                ],
+                'message' => 'Location updated successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to update location: ' . $e->getMessage());
+            
+            // For the update route, always return JSON since it's only called via AJAX
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update location: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function deleteLocation(Location $location)
@@ -304,6 +656,110 @@ class AdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting location'
+            ], 500);
+        }
+    }
+
+    public function deleteLocationMedia(Location $location, LocationMedia $media)
+    {
+        // Ensure user is authenticated and authorized
+        if (!auth()->check() || !auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
+        }
+
+        // Verify the media belongs to this location
+        if ($media->location_id !== $location->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Media does not belong to this location'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Delete the file from storage
+            $mediaPath = str_replace('/storage/', '', $media->media_url);
+            if (\Storage::disk('public')->exists($mediaPath)) {
+                \Storage::disk('public')->delete($mediaPath);
+            }
+
+            // If this was the primary media and there are other media files, set another as primary
+            $wasPrimary = $media->is_primary;
+            
+            // Delete the media record
+            $media->delete();
+
+            // If this was primary, set another image as primary
+            if ($wasPrimary) {
+                $nextPrimaryMedia = LocationMedia::where('location_id', $location->id)
+                    ->where('media_type', 'image')
+                    ->first();
+                    
+                if ($nextPrimaryMedia) {
+                    $nextPrimaryMedia->update(['is_primary' => true]);
+                }
+            }
+
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Media deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Failed to delete location media: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete media'
+            ], 500);
+        }
+    }
+
+    public function setLocationMediaPrimary(Location $location, LocationMedia $media)
+    {
+        // Ensure user is authenticated and authorized
+        if (!auth()->check() || !auth()->user()->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access'
+            ], 403);
+        }
+
+        // Verify the media belongs to this location
+        if ($media->location_id !== $location->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Media does not belong to this location'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Remove primary status from all media for this location
+            LocationMedia::where('location_id', $location->id)
+                ->update(['is_primary' => false]);
+
+            // Set this media as primary
+            $media->update(['is_primary' => true]);
+
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Primary media updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Failed to set primary media: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update primary media'
             ], 500);
         }
     }
@@ -456,14 +912,53 @@ class AdminController extends Controller
         $request->validate([
             'main_heading' => 'required|string|max:200',
             'main_description' => 'required|string|max:1000',
+            'background_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
+            'overlay_opacity' => 'nullable|integer|min:0|max:100',
+            'remove_background' => 'nullable|boolean'
         ]);
 
-        SiteContent::set('main_heading', $request->main_heading, Auth::id());
-        SiteContent::set('main_description', $request->main_description, Auth::id());
+        try {
+            // Update text content
+            SiteContent::set('main_heading', $request->main_heading, Auth::id());
+            SiteContent::set('main_description', $request->main_description, Auth::id());
+            SiteContent::set('overlay_opacity', $request->overlay_opacity ?? 50, Auth::id());
+        } catch (\Exception $e) {
+            Log::error('Failed to update site content: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update content: ' . $e->getMessage()
+            ], 500);
+        }
+
+        $backgroundImageUrl = null;
+
+        // Handle background image removal
+        if ($request->has('remove_background') && $request->remove_background) {
+            $oldImage = SiteContent::get('background_image');
+            if ($oldImage && Storage::exists('public/' . $oldImage)) {
+                Storage::delete('public/' . $oldImage);
+            }
+            SiteContent::set('background_image', null, Auth::id());
+        }
+        
+        // Handle new background image upload
+        if ($request->hasFile('background_image')) {
+            // Delete old background image if it exists
+            $oldImage = SiteContent::get('background_image');
+            if ($oldImage && Storage::exists('public/' . $oldImage)) {
+                Storage::delete('public/' . $oldImage);
+            }
+
+            // Optimize and store new image
+            $imagePath = $this->optimizeImage($request->file('background_image'));
+            SiteContent::set('background_image', $imagePath, Auth::id());
+            $backgroundImageUrl = Storage::url($imagePath);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Site content updated successfully'
+            'message' => 'Site content updated successfully',
+            'background_image' => $backgroundImageUrl
         ]);
     }
 

@@ -599,14 +599,11 @@
                     <a href="{{ route('admin.locations') }}" class="nav-link">🏖️ Locations</a>
                     <a href="{{ route('admin.houses') }}" class="nav-link">🏘️ Houses</a>
                     <a href="{{ route('admin.owners') }}" class="nav-link">👥 Owners</a>
-                    @if(auth()->user()->isAdmin())
-    <a href="{{ route('admin.bookings') }}" class="nav-link">📅 All Bookings</a>
-@elseif(auth()->user()->isOwner())
-    <a href="{{ route('owner.bookings') }}" class="nav-link">📅 My Bookings</a>
-@endif
+                    <a href="{{ route('admin.bookings') }}" class="nav-link">📅 All Bookings</a>
                     <a href="{{ route('admin.calendar') }}" class="nav-link">📆 Calendar</a>
                 @elseif(auth()->user()->isOwner())
-                    <a href="{{ route('bookings') }}" class="nav-link">📅 My Bookings</a>
+                    <a href="{{ route('admin.locations') }}" class="nav-link">🏖️ Locations</a>
+                    <a href="{{ route('owner.bookings') }}" class="nav-link">📅 My Bookings</a>
                     <a href="{{ route('owner.profile') }}" class="nav-link">👤 Profile</a>
                 @endif
             </div>

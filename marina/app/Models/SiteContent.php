@@ -12,6 +12,9 @@ class SiteContent extends Model
 
     protected $table = 'site_content';
     
+    // Disable created_at since the table only has updated_at
+    const CREATED_AT = null;
+    
     protected $fillable = [
         'content_key',
         'content_value',

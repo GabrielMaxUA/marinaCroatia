@@ -24,6 +24,46 @@
         <div class="location-stats">
             <span>{{ $houses->count() }} Properties Available</span>
         </div>
+        
+        @auth
+            @if(auth()->user()->isAdmin())
+                <!-- Admin Filters -->
+                <div class="admin-filters">
+                    <form method="GET" action="{{ route('public.houses', $location->id) }}" class="filters-form">
+                        <div class="filter-group">
+                            <input type="text" name="search" placeholder="Search houses..." value="{{ request('search') }}" />
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select name="owner_id">
+                                <option value="">All Owners</option>
+                                @foreach($owners as $owner)
+                                    <option value="{{ $owner->id }}" {{ request('owner_id') == $owner->id ? 'selected' : '' }}>
+                                        {{ $owner->full_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select name="location" onchange="if(this.value) window.location.href='/locations/'+this.value">
+                                <option value="">Switch Location</option>
+                                @foreach($allLocations as $loc)
+                                    <option value="{{ $loc->id }}" {{ $loc->id == $location->id ? 'selected' : '' }}>
+                                        {{ $loc->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                            <a href="{{ route('public.houses', $location->id) }}" class="btn btn-secondary">Clear</a>
+                        </div>
+                    </form>
+                </div>
+            @endif
+        @endauth
     </div>
 </section>
 
@@ -58,6 +98,20 @@
                 
                 <div class="house-info">
                     <h3>{{ $house->name }}</h3>
+                        {{-- Address (Admin only) --}}
+    @auth
+        @if(auth()->user()->isAdmin() && ($house->street_address || $house->house_number))
+            <div class="house-address">
+                <span class="icon">📍</span>
+                <span>
+                    {{ $house->street_address }} 
+                    @if($house->house_number)
+                        {{ $house->house_number }}
+                    @endif
+                </span>
+            </div>
+        @endif
+    @endauth
                     <div class="house-details">
                         @if($house->distance_to_sea)
                         <div class="detail-item">
@@ -211,6 +265,67 @@
 
 @push('styles')
 <style>
+    /* Admin Filters */
+    .admin-filters {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .house-address {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+    }
+
+    .house-address .icon {
+        font-size: 1rem;
+    }
+    .filters-form {
+        display: flex;
+        gap: 1rem;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 160px;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        background: white;
+        font-size: 0.875rem;
+        transition: border-color 0.2s;
+    }
+    
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .filters-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-group {
+            min-width: auto;
+        }
+    }
     .breadcrumb-container {
         background: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
@@ -575,44 +690,7 @@ function viewHouseGallery(houseId) {
             });
     }
 
-    // function saveHouse(event) {
-    //     event.preventDefault();
-    //     const form = event.target;
-    //     const formData = new FormData(form);  
-    //     formData.append('location_id', {{ $location->id }});
-        
-    //     const url = editingHouse 
-    //         ? `/admin/houses/${editingHouse}`
-    //         : '{{ route("admin.houses.create") }}';
-        
-    //     if (editingHouse) {
-    //         formData.append('_method', 'PUT');
-    //     }
-        
-    //     fetch(url, {
-    //         method: 'POST',
-    //         body: formData,
-    //         headers: {
-    //             'X-CSRF-TOKEN': window.Laravel.csrfToken
-    //         }
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         if (data.success) {
-    //             closeModal('house-modal');
-    //             showAlert(data.message, 'success');
-    //             setTimeout(() => {
-    //                 window.location.reload();
-    //             }, 1000);
-    //         } else {
-    //             showAlert(data.message || 'An error occurred', 'error');
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error('Error:', error);
-    //         showAlert('An error occurred', 'error');
-    //     });
-    // }
+    
     function saveHouse(event) {
     event.preventDefault();
     const form = event.target;
@@ -642,51 +720,73 @@ function viewHouseGallery(houseId) {
         closeModal('house-modal');
         showAlert(data.message, 'success');
 
-        // Update house card on page dynamically
-        if (editingHouse) {
-            const card = document.querySelector(`.house-card[onclick="viewHouse(${editingHouse})"]`);
-            if (card) {
-                const detailsContainer = card.querySelector('.house-details');
-
-                // Parking
+    if (editingHouse) {
+        const card = document.querySelector(`.house-card[onclick="viewHouse(${editingHouse})"]`);
+        if (card) {
+            const detailsContainer = card.querySelector('.house-details');
+        
+                // --- Update Parking ---
                 let parkingDetail = Array.from(detailsContainer.querySelectorAll('.detail-item'))
                     .find(d => d.querySelector('.icon')?.textContent.trim() === '🚗');
                 if (formData.get('parking_available') == 1) {
-                    if (!parkingDetail) {
-                        const newDetail = document.createElement('div');
-                        newDetail.className = 'detail-item';
-                        newDetail.innerHTML = `<span class="icon">🚗</span><span>${formData.get('parking_description') || 'Parking Available'}</span>`;
-                        detailsContainer.appendChild(newDetail);
-                    } else {
-                        parkingDetail.querySelector('span:last-child').textContent = formData.get('parking_description') || 'Parking Available';
-                    }
-                } else if (parkingDetail) {
-                    parkingDetail.remove();
+                if (!parkingDetail) {
+                    const newDetail = document.createElement('div');
+                    newDetail.className = 'detail-item';
+                    newDetail.innerHTML = `<span class="icon">🚗</span><span>${formData.get('parking_description') || 'Parking Available'}</span>`;
+                    detailsContainer.appendChild(newDetail);
+                } else {
+                    parkingDetail.querySelector('span:last-child').textContent =
+                        formData.get('parking_description') || 'Parking Available';
                 }
-
-                // Pet Friendly
+            } else if (parkingDetail) {
+                parkingDetail.remove();
+            }
+          
+                // --- Update Pet Friendly ---
                 let petDetail = Array.from(detailsContainer.querySelectorAll('.detail-item'))
                     .find(d => d.querySelector('.icon')?.textContent.trim() === '🐾');
                 if (formData.get('pet_friendly') == 1) {
-                    if (!petDetail) {
-                        const newDetail = document.createElement('div');
-                        newDetail.className = 'detail-item';
-                        newDetail.innerHTML = `<span class="icon">🐾</span><span>Pet Friendly</span>`;
-                        detailsContainer.appendChild(newDetail);
-                    }
-                } else if (petDetail) {
-                    petDetail.remove();
+                if (!petDetail) {
+                    const newDetail = document.createElement('div');
+                    newDetail.className = 'detail-item';
+                    newDetail.innerHTML = `<span class="icon">🐾</span><span>Pet Friendly</span>`;
+                    detailsContainer.appendChild(newDetail);
                 }
-
-                // Update other fields
+            } else if (petDetail) {
+                petDetail.remove();
+            }
+          
+                // --- Update Name ---
                 card.querySelector('.house-info h3').textContent = formData.get('name');
+          
+                // --- Update Address (Admin only) ---
+                let addressEl = card.querySelector('.house-address');
+                const newAddress = (formData.get('street_address') || '') +
+                                   (formData.get('house_number') ? ' ' + formData.get('house_number') : '');
+          
+                if (newAddress.trim()) {
+                    if (!addressEl) {
+                        addressEl = document.createElement('div');
+                        addressEl.className = 'house-address';
+                    addressEl.innerHTML = `<span class="icon">📍</span><span></span>`;
+                    card.querySelector('.house-info').insertBefore(addressEl, detailsContainer);
+                }
+                addressEl.querySelector('span:last-child').textContent = newAddress;
+            } else if (addressEl) {
+                addressEl.remove();
+            }
+          
+                // --- Update Description ---
                 const desc = card.querySelector('.house-description');
-                if (desc) desc.textContent = formData.get('description').substring(0, 100);
+                if (desc) {
+                    desc.textContent = formData.get('description').substring(0, 100);
             }
         }
-    })
-    .catch(err => console.error(err));
-}
+    }
+    
+        })
+        .catch(err => console.error(err));
+    }
 
     function deleteHouse(houseId) {
         if (confirm('Are you sure you want to delete this house? This will also delete all suites in this house.')) {

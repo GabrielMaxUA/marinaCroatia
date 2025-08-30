@@ -7,20 +7,91 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\OwnerController;
 
 Route::get('/', function () {
-    // Get locations with houses for public homepage
-    $locations = \App\Models\Location::with(['houses.suites'])->get();
+    // Get locations with houses for homepage (with admin filtering support)
+    $query = \App\Models\Location::with(['houses.suites', 'houses.owner', 'media', 'primaryImage']);
+    
+    // Add location filter for admin users
+    if (auth()->check() && auth()->user()->isAdmin() && request('location_id')) {
+        $query->where('id', request('location_id'));
+    }
+    
+    // Use pagination for admin, get all for public
+    if (auth()->check() && auth()->user()->isAdmin()) {
+        $locations = $query->orderBy('name')->paginate(12);
+        // Get all locations for the dropdown filter
+        $allLocations = \App\Models\Location::with(['houses', 'media', 'primaryImage'])->orderBy('name')->get();
+    } else {
+        $locations = $query->orderBy('name')->get();
+        $allLocations = $locations; // For public, use same data
+    }
+    
     $mainHeading = \App\Models\SiteContent::where('content_key', 'main_heading')->value('content_value') ?? 'Luxury Croatian Accommodations';
     $mainDescription = \App\Models\SiteContent::where('content_key', 'main_description')->value('content_value') ?? 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.';
+    $backgroundImage = \App\Models\SiteContent::where('content_key', 'background_image')->value('content_value');
+    $overlayOpacity = \App\Models\SiteContent::where('content_key', 'overlay_opacity')->value('content_value') ?? '50';
     
-    return view('welcome', compact('locations', 'mainHeading', 'mainDescription'));
+    return view('welcome', compact('locations', 'allLocations', 'mainHeading', 'mainDescription', 'backgroundImage', 'overlayOpacity'));
 })->name('home');
 
 // Public routes for viewing locations, houses, and suites
-Route::get('/locations/{location}', function($locationId) {
-    $location = \App\Models\Location::with(['houses.suites', 'houses.owner'])->findOrFail($locationId);
-    $houses = $location->houses;
+Route::get('/locations/{location}', function($locationId, \Illuminate\Http\Request $request) {
+    // Handle special "all" case for admin - show all houses from all locations
+    if ($locationId === 'all' && auth()->check() && auth()->user()->isAdmin()) {
+        // Create a virtual location object for "all locations"
+        $location = (object) ['id' => 'all', 'name' => 'All Locations', 'description' => 'Houses from all locations'];
+        
+        // Query all houses from all locations
+        $query = \App\Models\House::with(['location', 'owner', 'suites', 'images']);
+        
+        // Apply filters if present
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'LIKE', '%' . $request->search . '%')
+                  ->orWhere('street_address', 'LIKE', '%' . $request->search . '%');
+            });
+        }
+        
+        if ($request->location_id) {
+            $query->where('location_id', $request->location_id);
+        }
+        
+        if ($request->owner_id) {
+            $query->where('owner_id', $request->owner_id);
+        }
+        
+        $houses = $query->orderBy('location_id')->orderBy('name')->get();
+    } else {
+        // Normal case - specific location
+        $location = \App\Models\Location::with(['houses.suites', 'houses.owner'])->findOrFail($locationId);
+        
+        // Apply filters for admin users
+        $query = $location->houses()->with(['owner', 'suites', 'images']);
+        
+        if (auth()->check() && auth()->user()->isAdmin()) {
+            // Apply search filter
+            if ($request->search) {
+                $query->where(function($q) use ($request) {
+                    $q->where('name', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('street_address', 'LIKE', '%' . $request->search . '%');
+                });
+            }
+            
+            // Apply owner filter
+            if ($request->owner_id) {
+                $query->where('owner_id', $request->owner_id);
+            }
+        }
+        
+        $houses = $query->get();
+    }
     
-    return view('public.houses', compact('location', 'houses'));
+    // Get all locations and owners for admin filters
+    $allLocations = auth()->check() && auth()->user()->isAdmin() ? 
+        \App\Models\Location::orderBy('name')->get() : collect();
+    $owners = auth()->check() && auth()->user()->isAdmin() ? 
+        \App\Models\User::where('role', 'owner')->orderBy('first_name')->get() : collect();
+    
+    return view('public.houses', compact('location', 'houses', 'allLocations', 'owners'));
 })->name('public.houses');
 
 Route::get('/houses/{house}', function($houseId) {
@@ -78,6 +149,29 @@ Route::get('/suites/{suite}/gallery', function($suiteId) {
     ]);
 });
 
+Route::get('/locations/{location}/gallery', function($locationId) {
+    $location = \App\Models\Location::with(['media'])->findOrFail($locationId);
+    
+    $media = [];
+    
+    // If location has media, format them for the gallery
+    if ($location->media && $location->media->count() > 0) {
+        foreach ($location->media as $mediaItem) {
+            $media[] = [
+                'type' => $mediaItem->media_type,
+                'url' => $mediaItem->full_url,
+                'thumbnail' => $mediaItem->full_url
+            ];
+        }
+    }
+    
+    return response()->json([
+        'success' => true,
+        'location_name' => $location->name,
+        'media' => $media
+    ]);
+});
+
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -90,8 +184,12 @@ Route::middleware('auth')->group(function () {
 
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', function() { return redirect()->route('home'); })->name('dashboard');
-    Route::get('/locations', [AdminController::class, 'locations'])->name('locations');
-    Route::get('/houses', [AdminController::class, 'houses'])->name('houses');
+    Route::get('/locations', function() { return redirect()->route('home'); })->name('locations');
+    
+    Route::get('/houses', function() {
+        // Redirect to public houses with special "all" parameter for admin
+        return redirect()->route('public.houses', ['location' => 'all']);
+    })->name('houses');
     Route::get('/owners', [AdminController::class, 'owners'])->name('owners');
     Route::get('/owners/{owner}/info', [AdminController::class, 'getOwnerInfo'])->name('owners.info');
     Route::post('/owners', [AdminController::class, 'createOwner'])->name('owners.create');
@@ -101,8 +199,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     
     Route::post('/locations', [AdminController::class, 'createLocation'])->name('locations.create');
     Route::get('/locations/{location}', [AdminController::class, 'getLocation'])->name('locations.show');
-    Route::put('/locations/{location}', [AdminController::class, 'updateLocation'])->name('locations.update');
+    Route::post('/locations/{location}/update', [AdminController::class, 'updateLocation'])->name('locations.update');
     Route::delete('/locations/{location}', [AdminController::class, 'deleteLocation'])->name('locations.delete');
+    Route::delete('/locations/{location}/media/{media}', [AdminController::class, 'deleteLocationMedia'])->name('locations.media.delete');
+    Route::put('/locations/{location}/media/{media}/primary', [AdminController::class, 'setLocationMediaPrimary'])->name('locations.media.primary');
     
     Route::post('/houses', [AdminController::class, 'createHouse'])->name('houses.create');
     Route::get('/houses/{house}', [AdminController::class, 'getHouse'])->name('houses.show');

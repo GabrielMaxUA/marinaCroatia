@@ -11,8 +11,8 @@
                     <!-- Images/videos will be loaded here -->
                 </div>
                 <div class="gallery-nav">
-                    <button class="gallery-btn prev" onclick="previousMedia()">‹</button>
-                    <button class="gallery-btn next" onclick="nextMedia()">›</button>
+                    <button class="gallery-btn prev" onclick="previousMedia()">❮</button>
+                    <button class="gallery-btn next" onclick="nextMedia()">❯</button>
                 </div>
                 <div class="gallery-thumbnails" id="gallery-thumbnails">
                     <!-- Thumbnails will be loaded here -->
@@ -135,6 +135,9 @@
         transition: all 0.2s;
         pointer-events: auto;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        line-height: 1;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-weight: bold;
     }
     
     .gallery-btn:hover {
