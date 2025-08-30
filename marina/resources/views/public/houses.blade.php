@@ -109,92 +109,102 @@
 
 @auth
     @if(auth()->user()->isAdmin())
-        <!-- House Modal (Add/Edit) -->
-        <div id="house-modal" class="modal">
-            <div class="modal-content large">
-                <div class="modal-header">
-                    <h3 id="house-modal-title">Add House to {{ $location->name }}</h3>
-                    <button class="modal-close" onclick="closeModal('house-modal')">×</button>
-                </div>
-                <form id="house-form" onsubmit="saveHouse(event)">
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="house-name">House Name:</label>
-                            <input type="text" id="house-name" name="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="house-owner">Assign to Owner:</label>
-                            <select id="house-owner" name="owner_id" required>
-                                <option value="">Select Owner</option>
-                                @foreach(\App\Models\User::where('role', 'owner')->get() as $owner)
-                                <option value="{{ $owner->id }}">{{ $owner->full_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="house-address">Street Address:</label>
-                            <input type="text" id="house-address" name="street_address" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="house-number">House Number:</label>
-                            <input type="text" id="house-number" name="house_number">
-                        </div>
-                        <div class="form-group">
-                            <label for="house-distance">Distance to Sea:</label>
-                            <input type="text" id="house-distance" name="distance_to_sea" placeholder="e.g., 50m to sea">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="house-parking" name="parking_available">
-                            <span>Parking Available</span>
-                        </label>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="house-parking-desc">Parking Description:</label>
-                        <input type="text" id="house-parking-desc" name="parking_description" placeholder="e.g., Private garage">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="house-description">Description:</label>
-                        <textarea id="house-description" name="description" rows="4"></textarea>
-                    </div>
-                    
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="house-owner-phone">Owner Phone:</label>
-                            <input type="tel" id="house-owner-phone" name="owner_phone">
-                        </div>
-                        <div class="form-group">
-                            <label for="house-owner-email">Owner Email:</label>
-                            <input type="email" id="house-owner-email" name="owner_email">
-                        </div>
-                    </div>
-                    
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label for="house-bank-account">Bank Account:</label>
-                            <input type="text" id="house-bank-account" name="bank_account_number">
-                        </div>
-                        <div class="form-group">
-                            <label for="house-bank-name">Bank Name:</label>
-                            <input type="text" id="house-bank-name" name="bank_name">
-                        </div>
-                    </div>
-                    
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('house-modal')">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save House</button>
-                    </div>
-                </form>
-            </div>
+<!-- House Modal (Add/Edit) -->
+<div id="house-modal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="house-modal-title">Add House</h3>
+            <button class="modal-close" onclick="closeModal('house-modal')">×</button>
         </div>
-    @endif
+
+        <form id="house-form" onsubmit="saveHouse(event)">
+            
+            <!-- Row: House Name + Location -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="house-name">House Name:</label>
+                    <input type="text" id="house-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="house-location">Location:</label>
+                    <select id="house-location" name="location_id" required>
+                      <option value="{{ $location->id }}">{{ $location->name }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Owner -->
+            <div class="form-group">
+                <label for="house-owner">Assign to Owner:</label>
+                <select id="house-owner" name="owner_id" required>
+                    <option value="{{ $house->owner->id ?? '' }}">
+                        {{ $house->owner->full_name ?? 'Select Owner' }}
+                    </option>
+                </select>
+
+            </div>
+
+            <!-- Row: Address + House Number -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="house-address">Street Address:</label>
+                    <input type="text" id="house-address" name="street_address" required>
+                </div>
+                <div class="form-group">
+                    <label for="house-number">House Number:</label>
+                    <input type="text" id="house-number" name="house_number">
+                </div>
+            </div>
+
+            <!-- Distance to Sea -->
+            <div class="form-group">
+                <label for="house-distance">Distance to Sea:</label>
+                <input type="text" id="house-distance" name="distance_to_sea" placeholder="e.g., 50m to sea">
+            </div>
+
+            <!-- Row: Parking + Pet Friendly -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="house-parking" name="parking_available" value="1"
+                            {{ isset($house) && $house->parking_available ? 'checked' : '' }}>
+                        <span class="checkmark"></span>
+                        Parking Available
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="house-pet-friendly" name="pet_friendly" value="1"
+                            {{ isset($house) && $house->pet_friendly ? 'checked' : '' }}>
+                        <span class="checkmark"></span>
+                        Pet Friendly
+                    </label>
+                </div>
+            </div>
+
+
+            <!-- Parking Description -->
+            <div class="form-group">
+                <label for="house-parking-desc">Parking Description:</label>
+                <input type="text" id="house-parking-desc" name="parking_description" placeholder="e.g., Private garage">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="house-description">Description:</label>
+                <textarea id="house-description" name="description" rows="3" placeholder="Describe the house..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('house-modal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save House</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 @endauth
 
 @include('components.gallery-lightbox')
@@ -550,12 +560,9 @@ function viewHouseGallery(houseId) {
                     document.getElementById('house-number').value = house.house_number || '';
                     document.getElementById('house-distance').value = house.distance_to_sea || '';
                     document.getElementById('house-parking').checked = house.parking_available;
+                    document.getElementById('house-parking').checked = house.parking_available;
                     document.getElementById('house-parking-desc').value = house.parking_description || '';
                     document.getElementById('house-description').value = house.description || '';
-                    document.getElementById('house-owner-phone').value = house.owner_phone || '';
-                    document.getElementById('house-owner-email').value = house.owner_email || '';
-                    document.getElementById('house-bank-account').value = house.bank_account_number || '';
-                    document.getElementById('house-bank-name').value = house.bank_name || '';
                     
                     openModal('house-modal');
                 } else {
@@ -568,44 +575,118 @@ function viewHouseGallery(houseId) {
             });
     }
 
+    // function saveHouse(event) {
+    //     event.preventDefault();
+    //     const form = event.target;
+    //     const formData = new FormData(form);  
+    //     formData.append('location_id', {{ $location->id }});
+        
+    //     const url = editingHouse 
+    //         ? `/admin/houses/${editingHouse}`
+    //         : '{{ route("admin.houses.create") }}';
+        
+    //     if (editingHouse) {
+    //         formData.append('_method', 'PUT');
+    //     }
+        
+    //     fetch(url, {
+    //         method: 'POST',
+    //         body: formData,
+    //         headers: {
+    //             'X-CSRF-TOKEN': window.Laravel.csrfToken
+    //         }
+    //     })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //         if (data.success) {
+    //             closeModal('house-modal');
+    //             showAlert(data.message, 'success');
+    //             setTimeout(() => {
+    //                 window.location.reload();
+    //             }, 1000);
+    //         } else {
+    //             showAlert(data.message || 'An error occurred', 'error');
+    //         }
+    //     })
+    //     .catch(error => {
+    //         console.error('Error:', error);
+    //         showAlert('An error occurred', 'error');
+    //     });
+    // }
     function saveHouse(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        formData.append('location_id', {{ $location->id }});
-        
-        const url = editingHouse 
-            ? `/admin/houses/${editingHouse}`
-            : '{{ route("admin.houses.create") }}';
-        
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    // Ensure checkboxes are included if unchecked
+    if (!formData.has('parking_available')) formData.append('parking_available', 0);
+    if (!formData.has('pet_friendly')) formData.append('pet_friendly', 0);
+
+    formData.append('location_id', {{ $location->id }});
+
+    const url = editingHouse 
+        ? `/admin/houses/${editingHouse}`
+        : '{{ route("admin.houses.create") }}';
+
+    if (editingHouse) formData.append('_method', 'PUT');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': window.Laravel.csrfToken }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) return showAlert(data.message || 'Error', 'error');
+
+        closeModal('house-modal');
+        showAlert(data.message, 'success');
+
+        // Update house card on page dynamically
         if (editingHouse) {
-            formData.append('_method', 'PUT');
+            const card = document.querySelector(`.house-card[onclick="viewHouse(${editingHouse})"]`);
+            if (card) {
+                const detailsContainer = card.querySelector('.house-details');
+
+                // Parking
+                let parkingDetail = Array.from(detailsContainer.querySelectorAll('.detail-item'))
+                    .find(d => d.querySelector('.icon')?.textContent.trim() === '🚗');
+                if (formData.get('parking_available') == 1) {
+                    if (!parkingDetail) {
+                        const newDetail = document.createElement('div');
+                        newDetail.className = 'detail-item';
+                        newDetail.innerHTML = `<span class="icon">🚗</span><span>${formData.get('parking_description') || 'Parking Available'}</span>`;
+                        detailsContainer.appendChild(newDetail);
+                    } else {
+                        parkingDetail.querySelector('span:last-child').textContent = formData.get('parking_description') || 'Parking Available';
+                    }
+                } else if (parkingDetail) {
+                    parkingDetail.remove();
+                }
+
+                // Pet Friendly
+                let petDetail = Array.from(detailsContainer.querySelectorAll('.detail-item'))
+                    .find(d => d.querySelector('.icon')?.textContent.trim() === '🐾');
+                if (formData.get('pet_friendly') == 1) {
+                    if (!petDetail) {
+                        const newDetail = document.createElement('div');
+                        newDetail.className = 'detail-item';
+                        newDetail.innerHTML = `<span class="icon">🐾</span><span>Pet Friendly</span>`;
+                        detailsContainer.appendChild(newDetail);
+                    }
+                } else if (petDetail) {
+                    petDetail.remove();
+                }
+
+                // Update other fields
+                card.querySelector('.house-info h3').textContent = formData.get('name');
+                const desc = card.querySelector('.house-description');
+                if (desc) desc.textContent = formData.get('description').substring(0, 100);
+            }
         }
-        
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': window.Laravel.csrfToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                closeModal('house-modal');
-                showAlert(data.message, 'success');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            } else {
-                showAlert(data.message || 'An error occurred', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('An error occurred', 'error');
-        });
-    }
+    })
+    .catch(err => console.error(err));
+}
 
     function deleteHouse(houseId) {
         if (confirm('Are you sure you want to delete this house? This will also delete all suites in this house.')) {

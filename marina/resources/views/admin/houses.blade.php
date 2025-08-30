@@ -122,7 +122,12 @@
                             <span class="value">Parking Available</span>
                         </div>
                         @endif
-                        
+                        @if($house->pet_friendly)
+                          <div class="detail-item">
+                              <span class="label">🐾</span>
+                              <span class="value">Pet Friendly</span>
+                          </div>
+                        @endif
                         <div class="detail-item">
                             <span class="label">🏠</span>
                             <span class="value">{{ $house->suites->count() }} Suite{{ $house->suites->count() !== 1 ? 's' : '' }}</span>
@@ -455,6 +460,7 @@
         gap: 0.75rem;
         padding: 0.5rem 0;
         border-bottom: 1px solid #f3f4f6;
+        
     }
     
     .detail-item:last-child {
@@ -884,6 +890,15 @@ function updateHouseCard(house) {
                             item.style.display = 'none';
                         }
                         break;
+                    case '🐾':
+                        if (house.pet_friendly) {
+                            value.textContent = 'Pet Friendly';
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                        break;
+
                 }
             });
             break;
