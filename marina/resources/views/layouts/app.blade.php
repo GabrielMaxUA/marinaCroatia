@@ -22,30 +22,33 @@
 
         /* Header */
         .header {
-            display: flex;
-            position: absolute;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: #fff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            position: relative;
+          position: absolute; /* make it float over content */
+          top: 0;
+          left: 0;
+          width: 100%;
+          padding: 1rem 2rem;
+          display: flex;
+          justify-content: space-between; /* Home left, Login right */
+          align-items: center;
+          z-index: 100;
+          background: transparent; /* or rgba(0,0,0,0.4) for slight overlay */
         }
 
         .logo {
             font-size: 1.5rem;
-            font-weight: bold;
-            color: #2c5aa0;
-            text-align: center;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
         }
+
+         .logo:hover {
+            background-color: #2c5aa09b;
+            border: 1px solid #709fe49b;
+        }
+
 
         .header-image {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -55,14 +58,13 @@
         }
 
         .login-btn {
-            position: absolute;
+            position: static;
             right: 2rem;
             top: 50%;
-            transform: translateY(-50%);
+            transform: none;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            background: #3b82f6;
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 6px;
@@ -73,7 +75,8 @@
         }
 
         .login-btn:hover {
-            background: #2563eb;
+            background-color: #2c5aa09b;
+            border: 1px solid #709fe49b;
             color: white;
         }
 
@@ -582,7 +585,7 @@
 <body>
     <!-- Main Header -->
     <header class="header">
-        <a href="{{ url('/') }}" class="logo">MarinaCroatia.com</a>
+        <a href="{{ url('/') }}" class="logo">🏠</a>
         
         @guest
             <a href="{{ route('login') }}" class="login-btn">
