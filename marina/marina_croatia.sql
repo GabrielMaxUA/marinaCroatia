@@ -211,6 +211,7 @@ CREATE TABLE `houses` (
   `distance_to_sea` varchar(50) DEFAULT NULL,
   `parking_available` tinyint(1) DEFAULT 0,
   `parking_description` text DEFAULT NULL,
+  `pet_friendly` tinyint(1) DEFAULT 0,
   `description` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -221,8 +222,8 @@ CREATE TABLE `houses` (
 -- Dumping data for table `houses`
 --
 
-INSERT INTO `houses` (`id`, `location_id`, `owner_id`, `name`, `street_address`, `house_number`, `distance_to_sea`, `parking_available`, `parking_description`, `description`, `created_at`, `updated_at`, `is_active`) VALUES
-(1, 1, 4, 'villa costa', 'Ulica Obale', '12', '50 m to the sea', 0, NULL, 'Sea-view villa', '2025-08-26 22:53:28', '2025-08-28 03:46:10', 1);
+INSERT INTO `houses` (`id`, `location_id`, `owner_id`, `name`, `street_address`, `house_number`, `distance_to_sea`, `parking_available`, `parking_description`, `pet_friendly`, `description`, `created_at`, `updated_at`, `is_active`) VALUES
+(1, 1, 4, 'villa costa', 'Ulica Obale', '12', '50 m to the sea', 0, NULL, 0, 'Sea-view villa', '2025-08-26 22:53:28', '2025-08-28 03:46:10', 1);
 
 -- --------------------------------------------------------
 

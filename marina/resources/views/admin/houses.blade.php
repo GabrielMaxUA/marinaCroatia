@@ -222,12 +222,21 @@
                 <input type="text" id="house-distance" name="distance_to_sea" placeholder="e.g., 50m to sea">
             </div>
             
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="house-parking" name="parking_available">
-                    <span class="checkmark"></span>
-                    Parking Available
-                </label>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="house-parking" name="parking_available" value="1">
+                        <span class="checkmark"></span>
+                        Parking Available
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="house-pet-friendly" name="pet_friendly" value="1">
+                        <span class="checkmark"></span>
+                        Pet Friendly
+                    </label>
+                </div>
             </div>
             
             <div class="form-group">
@@ -238,28 +247,6 @@
             <div class="form-group">
                 <label for="house-description">Description:</label>
                 <textarea id="house-description" name="description" rows="3" placeholder="Describe the house..."></textarea>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="house-owner-phone">Owner Phone:</label>
-                    <input type="tel" id="house-owner-phone" name="owner_phone" placeholder="+385 xx xxx xxxx">
-                </div>
-                <div class="form-group">
-                    <label for="house-owner-email">Owner Email:</label>
-                    <input type="email" id="house-owner-email" name="owner_email">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="house-bank-account">Bank Account Number:</label>
-                    <input type="text" id="house-bank-account" name="bank_account_number">
-                </div>
-                <div class="form-group">
-                    <label for="house-bank-name">Bank Name:</label>
-                    <input type="text" id="house-bank-name" name="bank_name">
-                </div>
             </div>
             
             <div class="modal-actions">
@@ -567,12 +554,64 @@
         gap: 1rem;
     }
     
+    /* Form Styles */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+        background: white;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
     .checkbox-label {
         display: flex;
         align-items: center;
         gap: 0.75rem;
         cursor: pointer;
         font-weight: 500;
+        padding: 0.5rem 0;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        cursor: pointer;
+    }
+    
+    .checkmark {
+        display: none;
     }
     
     .pagination-wrapper {
@@ -617,33 +656,59 @@
 let editingHouse = null;
 
 function editHouse(id) {
-    const houses = @json($houses);
-    const house = houses.data ? houses.data.find(h => h.id === id) : houses.find(h => h.id === id);
-    
-    if (house) {
-        editingHouse = id;
-        document.getElementById('house-modal-title').textContent = 'Edit House';
-        document.getElementById('house-name').value = house.name;
-        document.getElementById('house-location').value = house.location_id;
-        document.getElementById('house-owner').value = house.owner_id || '';
-        document.getElementById('house-address').value = house.street_address;
-        document.getElementById('house-number').value = house.house_number || '';
-        document.getElementById('house-distance').value = house.distance_to_sea || '';
-        document.getElementById('house-parking').checked = house.parking_available;
-        document.getElementById('house-parking-desc').value = house.parking_description || '';
-        document.getElementById('house-description').value = house.description || '';
-        document.getElementById('house-owner-phone').value = house.owner_phone || '';
-        document.getElementById('house-owner-email').value = house.owner_email || '';
-        document.getElementById('house-bank-account').value = house.bank_account_number || '';
-        document.getElementById('house-bank-name').value = house.bank_name || '';
-        openModal('house-modal');
-    }
+    // Fetch fresh house data from server
+    fetch(`{{ url('admin/houses') }}/${id}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': window.Laravel.csrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.house) {
+            const house = data.house;
+            editingHouse = id;
+            document.getElementById('house-modal-title').textContent = 'Edit House';
+            document.getElementById('house-name').value = house.name;
+            document.getElementById('house-location').value = house.location_id;
+            document.getElementById('house-owner').value = house.owner_id || '';
+            document.getElementById('house-address').value = house.street_address;
+            document.getElementById('house-number').value = house.house_number || '';
+            document.getElementById('house-distance').value = house.distance_to_sea || '';
+            document.getElementById('house-parking').checked = house.parking_available === 1 || house.parking_available === '1' || house.parking_available === true;
+            document.getElementById('house-pet-friendly').checked = house.pet_friendly === 1 || house.pet_friendly === '1' || house.pet_friendly === true;
+            document.getElementById('house-parking-desc').value = house.parking_description || '';
+            document.getElementById('house-description').value = house.description || '';
+            openModal('house-modal');
+        } else {
+            showAlert('Error loading house data', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error loading house data', 'error');
+    });
 }
 
 function saveHouse(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
+    
+    // Handle checkboxes properly - if not checked, explicitly set to 0
+    if (!document.getElementById('house-parking').checked) {
+        formData.set('parking_available', '0');
+    }
+    if (!document.getElementById('house-pet-friendly').checked) {
+        formData.set('pet_friendly', '0');
+    }
+    
+    // Debug: log form data
+    console.log('Form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, '=', value);
+    }
     
     const url = editingHouse 
         ? `{{ url('admin/houses') }}/${editingHouse}`
@@ -660,14 +725,42 @@ function saveHouse(event) {
             'X-CSRF-TOKEN': window.Laravel.csrfToken
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // Debug: log the response
+        return response.text().then(text => {
+            console.log('Response text:', text);
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Failed to parse JSON:', text);
+                throw new Error('Server returned invalid JSON');
+            }
+        });
+    })
     .then(data => {
         if (data.success) {
             closeModal('house-modal');
             showAlert(data.message, 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            
+            if (editingHouse) {
+                // Update existing house card without reload
+                updateHouseCard(data.house);
+            } else {
+                // For new house creation, reload to show new card
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+            
+            // Reset form for next use
+            editingHouse = null;
+            document.getElementById('house-modal-title').textContent = 'Add New House';
+            document.getElementById('house-form').reset();
+            document.getElementById('house-parking').checked = false;
+            document.getElementById('house-pet-friendly').checked = false;
         } else {
             showAlert(data.message || 'An error occurred', 'error');
         }
@@ -676,6 +769,29 @@ function saveHouse(event) {
         console.error('Error:', error);
         showAlert('An error occurred', 'error');
     });
+}
+
+function updateHouseCard(house) {
+    // Find the house card by data attribute or ID
+    const houseCard = document.querySelector(`[onclick*="editHouse(${house.id})"]`).closest('.house-card');
+    if (!houseCard) return;
+    
+    // Update the house name
+    const houseName = houseCard.querySelector('.house-header h3');
+    if (houseName) houseName.textContent = house.name;
+    
+    // Update house details
+    const details = houseCard.querySelectorAll('.detail-item .value');
+    if (details.length >= 4) {
+        // Update location
+        details[0].textContent = house.location.name;
+        // Update address  
+        details[1].textContent = `${house.street_address}${house.house_number ? ' ' + house.house_number : ''}`;
+        // Update distance
+        details[2].textContent = house.distance_to_sea || 'Not specified';
+        // Update parking
+        details[3].textContent = house.parking_available ? 'Available' : 'Not available';
+    }
 }
 
 function deleteHouse(id) {
@@ -730,12 +846,59 @@ function viewHouseBookings(houseId) {
     window.location.href = `{{ route('admin.bookings') }}?house_id=${houseId}`;
 }
 
+function updateHouseCard(house) {
+    // Find the house card and update its content
+    const houseCards = document.querySelectorAll('.house-card:not(.add-new)');
+    for (let card of houseCards) {
+        const editBtn = card.querySelector('.action-btn.edit');
+        if (editBtn && editBtn.getAttribute('onclick').includes(`editHouse(${house.id})`)) {
+            // Update house name
+            card.querySelector('h3').textContent = house.name;
+            
+            // Update details
+            const detailItems = card.querySelectorAll('.detail-item');
+            detailItems.forEach(item => {
+                const label = item.querySelector('.label').textContent;
+                const value = item.querySelector('.value');
+                
+                switch(label) {
+                    case '📍':
+                        value.textContent = house.location.name;
+                        break;
+                    case '👤':
+                        value.textContent = house.owner ? house.owner.first_name + ' ' + house.owner.last_name : 'Unassigned';
+                        break;
+                    case '🌊':
+                        if (house.distance_to_sea) {
+                            value.textContent = house.distance_to_sea;
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                        break;
+                    case '🚗':
+                        if (house.parking_available) {
+                            value.textContent = 'Parking Available';
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                        break;
+                }
+            });
+            break;
+        }
+    }
+}
+
 // Reset form when opening modal
 document.getElementById('house-modal').addEventListener('click', function(e) {
     if (e.target === this) {
         editingHouse = null;
         document.getElementById('house-modal-title').textContent = 'Add New House';
         document.getElementById('house-form').reset();
+        document.getElementById('house-parking').checked = false;
+        document.getElementById('house-pet-friendly').checked = false;
     }
 });
 </script>

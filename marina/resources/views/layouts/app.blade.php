@@ -718,7 +718,7 @@
                 alertDiv.remove();
             }, duration);
         }
-
+        
         // Form submission with loading
         function submitForm(form, callback) {
             const submitBtn = form.querySelector('[type="submit"]');

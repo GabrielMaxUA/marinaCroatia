@@ -20,6 +20,7 @@ class House extends Model
         'distance_to_sea',
         'parking_available',
         'parking_description',
+        'pet_friendly',
         'description',
         'is_active'
     ];
@@ -28,6 +29,7 @@ class House extends Model
     {
         return [
             'parking_available' => 'boolean',
+            'pet_friendly' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

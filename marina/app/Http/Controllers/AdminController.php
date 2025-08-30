@@ -17,17 +17,6 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    // public function dashboard()
-    // {
-    //     if (!Auth::user()->isAdmin()) {
-    //         abort(403, 'Access denied. Admin privileges required.');
-    //     }
-    //     $locations = Location::with('houses.suites')->get();
-    //     $mainHeading = SiteContent::get('main_heading', 'Luxury Croatian Accommodations');
-    //     $mainDescription = SiteContent::get('main_description', 'We are a premium travel agency specializing in exclusive accommodations along the Croatian coast.');
-        
-    //     return view('admin.dashboard', compact('locations', 'mainHeading', 'mainDescription'));
-    // }
 
     public function locations(Request $request)
     {
@@ -328,13 +317,10 @@ class AdminController extends Controller
             'street_address' => 'required|string|max:200',
             'house_number' => 'nullable|string|max:10',
             'distance_to_sea' => 'nullable|string|max:50',
-            'parking_available' => 'boolean',
+            'parking_available' => 'nullable|boolean',
+            'pet_friendly' => 'nullable|boolean',
             'parking_description' => 'nullable|string',
-            'description' => 'nullable|string',
-            'owner_phone' => 'nullable|string|max:20',
-            'owner_email' => 'nullable|email',
-            'bank_account_number' => 'nullable|string|max:50',
-            'bank_name' => 'nullable|string|max:100',
+            'description' => 'nullable|string'
         ]);
 
         $house = House::create($request->all());
@@ -355,14 +341,10 @@ class AdminController extends Controller
             'street_address' => 'required|string|max:200',
             'house_number' => 'nullable|string|max:10',
             'distance_to_sea' => 'nullable|string|max:50',
-            'parking_available' => 'boolean',
+            'parking_available' => 'nullable|boolean',
+            'pet_friendly' => 'nullable|boolean',
             'parking_description' => 'nullable|string',
-            'description' => 'nullable|string',
-            'owner_phone' => 'nullable|string|max:20',
-            'owner_email' => 'nullable|email',
-            'bank_account_number' => 'nullable|string|max:50',
-            'bank_name' => 'nullable|string|max:100',
-            'is_active' => 'boolean'
+            'description' => 'nullable|string'
         ]);
 
         $house->update($request->all());
